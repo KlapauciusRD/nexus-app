@@ -5,8 +5,6 @@ Config.set('graphics', 'height', '450')
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.widget import Widget
-
-
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.layout import Layout
@@ -18,13 +16,9 @@ from kivy.uix.button import Button
 from kivy.uix.dropdown import DropDown
 from kivy.uix.textinput import TextInput
 
-
 from kivy.utils import get_color_from_hex
 
-
-
 from functools import partial
-
 
 from kivy.uix.tabbedpanel import TabbedPanel
 from kivy.uix.floatlayout import FloatLayout
@@ -36,12 +30,6 @@ __version__ = "0.0.3"
 
 #Builder.load_file('C:\\Users\\ckswi\\Google Drive\\Nexus\\nexusApp\\nexus.kv') #LAPTOP
 #Builder.load_file('C:\Users\CWPC\Google Drive\Nexus\nexusApp\nexus.kv') #PC
-
-
-
- 
-    
-
 
 class Holder(BoxLayout):
     #IDs for Stat bar
@@ -88,12 +76,10 @@ class Holder(BoxLayout):
     #Function panel
     function_pane = ObjectProperty(None)
     
-    
     def __init__(self, **kwargs):
         super(Holder, self).__init__(**kwargs)
         self.inv_cont.bind(minimum_height=self.inv_cont.setter('height'))
         #self.target_pane.bind(minimum_height=self.target_pane.setter('height'))
-        
         
         self.weapon = ''
         self.target = ''
@@ -101,20 +87,12 @@ class Holder(BoxLayout):
         self.charge = ''
         api.page_load()
         self.refresh_quick()
-        
-        
-
-            
-            
-            
             
     #Force a complete data update
     def refresh_data(self):
         api.ref_force()
         self.update_gui()
         pass
-    
-    
     
     #This should just update the not currently open screen out of map and inventory
     def refresh_quick(self):
@@ -267,7 +245,7 @@ class Holder(BoxLayout):
                 #Put in the portals
                 for portal in self.c_dat['portals']:
                     btn = FillButton(text=portal[0],on_press=partial(self.portal,portal))
-                    self.ids['action_pane'].add_widget(btn)
+                    self.action_pane.add_widget(btn)
                 
             else:
                 self.ids['action_pane'].clear_widgets()
@@ -285,7 +263,6 @@ class Holder(BoxLayout):
                 box = BoxLayout()
                 dict = {1:(1,1,1,1),2:(0,1,0,1),3:(1,0,0,1),4:(0,0,1,1)}
                 for key, val in dict.iteritems():
-                    print(key, val)
                     label = ClipLabel(text=c[key],color=val)
                     if key ==1:
                         label.size_hint_x = .5
@@ -308,8 +285,8 @@ class Holder(BoxLayout):
             self.function_pane.add_widget(btn)
             
         print('done refreshing gui')
-
         
+###Callbacks that must interface with the api
     def login(self, button):
         print('trying to log in')
         print(self.un_input.text)
@@ -329,38 +306,32 @@ class Holder(BoxLayout):
         api.respawn()
         self.update_gui()
     
-        
     def move(self,dir,button):
         print('moving begins')
         api.move(dir)
         print('moving ends, refreshing gui')
         self.update_gui()
         
-    
     def portal(self, pID, button):
         api.portal(pID)
         self.update_gui()
     
-
-    #Combat stuff.
-    
+    ###Combat stuff###
     def set_target(self,t,button):
         self.target = t[1]
         self.target_label.text = 't:'+t[0]
         
     def set_target_object(self,t,button):
         self.target = t
-        print t
+        print "attacking " + t
         self.target_label.text = 't:'+t
         
-    #NOT DONE
     def set_charge(self,c):
         if c == "None" or c == "Charges":
             self.charge = ''
         else:
             self.charge = c
 
-        
     def attack(self):
         if self.weapon and self.target:
             if self.charge:
@@ -369,10 +340,6 @@ class Holder(BoxLayout):
                 api.attack(self.target,self.weapon)
         self.update_gui()
 
-
-        
-
-        
     #These are set via spinners. This requires checking against the dictionaries.
     def set_weapon(self,w):
         for x in self.c_dat['weapons']:
@@ -401,21 +368,11 @@ class Holder(BoxLayout):
         
         self.update_gui()        
         
-        
-
-    
-    
-    
-    
     def reload_weapon(self,w,button):
         api.use(w[1])
         self.update_gui()
     
-    
-    
-    
     #Item stuff
-
     def set_item(self,i,button):    
         self.item = i[4]
         self.item_label.text = 'i:'+i[0]
@@ -448,31 +405,19 @@ class Holder(BoxLayout):
 
         self.update_gui()
         
-        
-    
     #Skills stuff
-    
     def use_skill(self,s,button):
         api.useSkill(s)
         self.update_gui()
 
-        
     def cast_spell(self,s,button):
         api.castSpell(s[0])
         self.update_gui()
 
-        
     def trigger_spell(self,s,button):
         api.castSpell(s[0])
         self.update_gui()
 
-        
-    
-    
-    
-    
-    
-    
     #ACTIONS stuff
     def door(self,action):
         api.door(action)
@@ -493,8 +438,6 @@ class Holder(BoxLayout):
             api.say(text)
         self.message_input.text = ''
         self.update_gui()
-    
-    
     
 #These are custom kivy classes    
 class Tabbable(TabbedPanel):
@@ -517,8 +460,7 @@ class SpinnerOption(Button):
     pass
 
     
-    
-
+###Build the app###
 class NexusApp(App):
     def on_pause(self):
         # Here you can save data if needed
@@ -531,20 +473,7 @@ class NexusApp(App):
     def build(self):
         return Holder()
 
-
-
-
-    
-
-
-
-
-
-
-
-
-
-        
+###Run The application###
 if __name__ == '__main__':
     NexusApp().run()
     

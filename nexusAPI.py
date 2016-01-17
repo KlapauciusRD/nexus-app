@@ -3,8 +3,6 @@ import pickle
 from lxml import html
 
 
-
-
 ###Loading pages###
 def page_load(postData={}, quick = False):
     print('page loading')
@@ -23,7 +21,7 @@ def page_load(postData={}, quick = False):
         #Scrape info from the soup
         ref_all(tree)
 
-    return tree
+    return
 
 ###Code for logging in and out###
 def login(un,pw):
@@ -176,8 +174,7 @@ def pickup_ref(f):
 def loc_ref(tag):
     c_dat['location'] = tag.text_content()
 
-    
-    #Target ref should probably scrape current hp. Stretch goal.
+#Target ref should probably scrape current hp. Stretch goal.
 def target_ref(a):
     #Back out if we've gotten the faction sh link
     if a.attrib['href'][:32] == 'modules.php?name=Game&op=faction':
@@ -379,7 +376,6 @@ def ref_all(tree):
             c_dat['screen'] = 'other'
             print('other')
 
-
 ###Giving Data###
 def get_c_dat():
     return c_dat
@@ -387,18 +383,16 @@ def get_c_dat():
 def get_char_list():
     return a_dat['char_list']
 
-
-
-    
-            
 ######ACTIONS########
-
 def respawn():
     postData = {'op':'respawn','RID':c_dat['cID'],'sidebar':'Map'}
     p = page_load(postData)
 #Map interactions
 def move(direction, leap = 0):
     postData={'op':'move','direction':direction,'sidebar':'Map'}
+    if "Deactivate Cloak of Air" in c_dat['skills']:
+        postData['Gust'] = 'Gust'
+        
     p = page_load(postData)
     #or if you are a HC with air p = s.post(url, data={'op':'move','direction':direction,'Gust':'Gust'})
     #maybe if skills contains deactive air cloak>
@@ -566,7 +560,7 @@ def say(text,target=0):
     page_load(postData)
     
 
-
+####On start
             
 ###Session Setup###
 url='http://www.nexusclash.com/modules.php?name=Game'
@@ -584,13 +578,6 @@ a_dat = {}#Dict containing some account data, won't be passed every page load
 
 
 ###End session setup###
-
-
-
-
-
-
-
 
 
 

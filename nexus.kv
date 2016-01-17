@@ -1,6 +1,5 @@
 <Holder>:
 
-
     #All the object propery IDs for SPEED
     
     #IDs for Stat bar
@@ -47,9 +46,6 @@
     
     #Function panel
     function_pane:function_pane
-    
-    
-    
     
     orientation:'vertical'    
     #This is the statbar
@@ -149,7 +145,6 @@
                             row_default_height: '20dp'
                             row_force_default: True
                             
-                            
             ########Map tab#######
             TabbedPanelItem:
                 text:'Map'
@@ -177,9 +172,6 @@
                         text_size: self.width, None
                         text:''                        
 
-                        
-                            
-                            
             ########Action tab#######            
             TabbedPanelItem:
                 text:'Act.'
@@ -192,11 +184,9 @@
                             #orientation:'vertical'
                             size_hint_y:None
                             GridLayout:
-                                size_hint_y: None
-                                #height: self.minimum_height
-                                cols: 2
                                 id:default_action_pane
-                                #size_hint_y: None
+                                size_hint_y: None
+                                height: root.height/15*5
                                 cols: 2
                                 row_default_height: root.height/15
                                 row_force_default: True
@@ -230,15 +220,11 @@
                                     on_press:root.door('pick')
 
                             GridLayout:
-                                #size_hint_y: None
-                                height: self.minimum_height
-                                cols: 1
                                 id:action_pane
+                                cols: 1
                                 row_default_height: root.height/15
                                 row_force_default: True
                                 
-                                
-            
             ########Targetting tab#######    
             TabbedPanelItem:
                 text:'Target'
@@ -296,8 +282,6 @@
                             row_default_height: '20dp'
                             row_force_default: True
 
-            
-            
             ########Skills tab########
             TabbedPanelItem:
                 text:'Skill'
@@ -315,8 +299,6 @@
                             cols: 2
                             row_default_height: root.height/15
                             row_force_default: True    
-            
-            
             
             ########Messages tab########
             TabbedPanelItem:
@@ -347,7 +329,6 @@
                             cols: 1
                             row_default_height: '20dp'
             
-            
             ########Misc functions tab (logout and so on)########
             TabbedPanelItem:
                 text:'Func'
@@ -362,14 +343,6 @@
                         cols: 1
                         row_default_height: root.height/13
             
-        
-        
-        
-        
-        
-        
-        
-        
     ########BottomBar section########
     BoxLayout:
         size_hint_y:.05
@@ -398,15 +371,13 @@
             halign: 'right'
             text:'w:-'    
 
-            
-
-            
 <FillLabel@Label>:
     font_size:self.height*.7
     valign:'middle'
     text_size: self.size
     shorten:True
-    shorten_from:'right'    
+    shorten_from:'right'   
+    
 <FillButton@Button>:
     font_size:self.height*.7
     valign:'middle'        
@@ -414,14 +385,13 @@
     shorten:True
     shorten_from:'right'            
             
-            
-            
 <ClipLabel@Label>:
     font_size:13
     text_size: self.size
     shorten:True
     shorten_from:'right'
     valign:'middle'
+
 <ClipButton@Button>:
     font_size:13
     text_size: self.size
@@ -429,11 +399,9 @@
     shorten_from:'right'
     valign:'middle'
     
-    
 <LoginLayout@GridLayout>
     cols:2
     row_default_height: '40dp'
-    
     
 <MapButton@Button>:
     height:self.width
