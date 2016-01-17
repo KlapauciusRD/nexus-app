@@ -32,7 +32,7 @@ from kivy.uix.floatlayout import FloatLayout
 
 import nexusAPI as api
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 #Builder.load_file('C:\\Users\\ckswi\\Google Drive\\Nexus\\nexusApp\\nexus.kv') #LAPTOP
 #Builder.load_file('C:\Users\CWPC\Google Drive\Nexus\nexusApp\nexus.kv') #PC
