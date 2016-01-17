@@ -1,0 +1,464 @@
+<Holder>:
+
+
+    #All the object propery IDs for SPEED
+    
+    #IDs for Stat bar
+    name:name
+    ap:ap
+    hp:hp
+    mp:mp
+    mo:mo
+    level:level
+    log:log
+    status:status
+    
+    #IDs for Inventory panel
+    item_context:item_context
+    inv_cont:inv_cont
+    
+    #IDs for Target panel
+    target_pane:target_pane
+    reload_context:reload_context
+    weapon_dropdown:weapon_dropdown
+    charge_dropdown:charge_dropdown
+    
+    #IDs for actions page page
+    action_pane:action_pane
+    default_action_pane:default_action_pane
+    
+    #IDs for skill page
+    skill_pane:skill_pane
+    
+    #IDs for Map panel
+    map_pane:map_pane
+    tile_contents:tile_contents
+    current_location:current_location    
+    
+    #IDs for message panel
+    message_input:message_input
+    message_pane:message_pane
+
+    
+    #IDs for bottom panel
+    target_label:target_label
+    item_label:item_label
+    weapon_label:weapon_label
+    
+    #Function panel
+    function_pane:function_pane
+    
+    
+    
+    
+    orientation:'vertical'    
+    #This is the statbar
+    BoxLayout:
+        size_hint_y:.21
+        orientation:'vertical'
+        BoxLayout:
+            Button:
+                id:refresh
+                size_hint_x:.1
+                text:'R'
+                font_size:self.height*.5
+                on_press: root.refresh_data()
+            BoxLayout:
+                orientation:'vertical'
+                FillLabel:
+                    id:name
+                    text:'not connected'            
+                BoxLayout:
+                    FillLabel:
+                        id:ap
+                        text:'-'
+                        color: 0,1,0,1
+                    FillLabel:
+                        id:hp
+                        text:'-'
+                        color: 1,0,0,1
+                    FillLabel:
+                        id:mp
+                        text:'-'
+                        color:0,0,1,1
+                    FillLabel:
+                        id:mo
+                        text:'-'
+                        color:1,1,1,1
+                    FillLabel:
+                        id:level
+                        text:'-'
+                        color: 1,0,0,.25
+            Button:
+                id:disconnect
+                size_hint_x:.1
+                text:'D'
+                font_size:self.height*.5
+                on_press:root.disconnect_character()
+        Label:
+            valign:'top'
+            size_hint_y:.2
+            font_size:10
+            text_size: self.width, None
+            id:status
+            text:'list some effects?'
+        Label:
+            valign:'top'
+            id:log
+            text_size: self.width, self.height
+            font_size:10
+            size_hint_y:.4
+            text:'last message \nshould wrap'
+        
+    #This contains the tabbed panels
+    BoxLayout:
+        TabbedPanel:
+            tab_height:self.width/10
+            tab_width:self.width/7
+            
+            pos_hint: {'center_x': .5, 'center_y': .5}
+            do_default_tab: False
+            
+            ########Inventory tab#######
+            TabbedPanelItem:
+                text:'Inv'
+                BoxLayout:
+                    orientation:'vertical'
+                    BoxLayout:
+                        size_hint_y:.10
+                        Button:
+                            text:'Use'
+                            on_press:root.use()
+                        MySpinner:
+                            text:'Context'
+                            id:item_context
+                            values:["Drop","Give","Reload","Safe","Locker","Set Up"]
+                        Button:
+                            text:'Go'
+                            on_press:root.item_context_go()
+                    ScrollView
+                        
+                        size: self.size
+                        GridLayout:
+                            size_hint_y: None
+                            height: self.minimum_height
+                            cols: 2
+                            id:inv_cont
+                            size_hint_y: None
+                            cols: 3
+                            row_default_height: '20dp'
+                            row_force_default: True
+                            
+                            
+            ########Map tab#######
+            TabbedPanelItem:
+                text:'Map'
+                BoxLayout:
+                    orientation:'vertical'
+                    Label:
+                        id:current_location
+                        size_hint_y:.18
+                        font_size: 12
+                        text_size: self.width, None
+                        text:''
+                        
+                    GridLayout:
+                        
+                        cols: 5
+                        id:map_pane
+                        size_hint_y: 1
+                        width:(self.height,root.width)
+                        row_default_height: min(self.width/5,self.height/5)
+
+                    Label:
+                        id:tile_contents
+                        size_hint_y:.2
+                        font_size: 12
+                        text_size: self.width, None
+                        text:''                        
+
+                        
+                            
+                            
+            ########Action tab#######            
+            TabbedPanelItem:
+                text:'Act.'
+                BoxLayout:
+                    orientation:'vertical'
+                
+                    ScrollView
+                        size: self.size
+                        StackLayout:
+                            #orientation:'vertical'
+                            size_hint_y:None
+                            GridLayout:
+                                size_hint_y: None
+                                #height: self.minimum_height
+                                cols: 2
+                                id:default_action_pane
+                                #size_hint_y: None
+                                cols: 2
+                                row_default_height: root.height/15
+                                row_force_default: True
+                                
+                                Button:
+                                    text:'enter'
+                                    on_press:root.door('in')
+                                Button:
+                                    text:'exit'
+                                    on_press:root.door('out')                        
+                                Button:
+                                    text:'open'
+                                    on_press:root.door('open')
+                                Button:
+                                    text:'close'
+                                    on_press:root.door('close')
+                                Button:
+                                    text:'search'
+                                    on_press:root.search()
+                                Button:
+                                    text:'hide'
+                                    on_press:root.hide()
+                                Button:
+                                    text:'lock'
+                                    on_press:root.door('lock')
+                                Button:
+                                    text:'unlock'
+                                    on_press:root.door('unlock')                                
+                                Button:
+                                    text:'pick'
+                                    on_press:root.door('pick')
+
+                            GridLayout:
+                                #size_hint_y: None
+                                height: self.minimum_height
+                                cols: 1
+                                id:action_pane
+                                row_default_height: root.height/15
+                                row_force_default: True
+                                
+                                
+            
+            ########Targetting tab#######    
+            TabbedPanelItem:
+                text:'Target'
+                BoxLayout:
+                    orientation:'vertical'
+                    #Attacking buttons
+                    BoxLayout:
+                        size_hint_y:.2
+                        
+                        Button:
+                            size_hint_x:.25
+                            text:'Attack'
+                            on_press:root.attack()
+                        BoxLayout:
+                            size_hint_x:.5
+                            orientation:'vertical'
+                            MySpinner:
+                                id:weapon_dropdown
+                                on_text:root.set_weapon(self.text)
+                                text:'Weapons'
+                                
+                            MySpinner:
+                                
+                                id:charge_dropdown
+                                text: "Charges"
+                                values: ["None"]
+                                #background_color: color_button if self.state == 'normal' else color_button_pressed
+                                #color: color_font
+                                #option_cls: Factory.get("MySpinnerOption")
+                                size_hint: 1, 1
+                                on_text:(root.set_charge(self.text))
+
+                        BoxLayout:
+                            size_hint_x:.25
+                            orientation:'vertical'
+                            Button:
+                                text:'Go'
+                                on_press:root.reload()
+                            MySpinner:
+                                id:reload_context
+                                text:'Pickup'
+                                values:["Reload","Get Weapon", "Rocks"]
+
+                        
+                            
+                    #Available targets
+                    ScrollView
+                        size: self.size
+                        GridLayout:
+                            size_hint_y: None
+                            height: self.minimum_height
+                            cols: 1
+                            id:target_pane
+                            size_hint_y: None
+                            row_default_height: '20dp'
+                            row_force_default: True
+
+            
+            
+            ########Skills tab########
+            TabbedPanelItem:
+                text:'Skill'
+                BoxLayout:
+                    orientation:'vertical'                
+
+                    ScrollView
+                        size: self.size
+                        GridLayout:
+                            size_hint_y: None
+                            height: self.minimum_height
+                            cols: 2
+                            id:skill_pane
+                            size_hint_y: None
+                            cols: 2
+                            row_default_height: root.height/15
+                            row_force_default: True    
+            
+            
+            
+            ########Messages tab########
+            TabbedPanelItem:
+                text:'Msg'
+                BoxLayout:
+                    orientation:'vertical'                
+                    BoxLayout:
+                        size_hint_y:.15
+                        Button:
+                            size_hint_x:.15
+                            text:'Say'
+                            font_size:self.height*.3
+                            on_press: root.say(message_input.text)                            
+                        TextInput:
+                            id:message_input
+                        Button:
+                            size_hint_x:.15
+                            text:'PM'
+                            font_size:self.height*.3
+                            on_press: root.say(message_input.text,'whisper')
+                    ScrollView
+                        size: self.size
+                        GridLayout:
+                            size_hint_y: None
+                            height: self.minimum_height
+                            id:message_pane
+                            size_hint_y: None
+                            cols: 1
+                            row_default_height: '20dp'
+            
+            
+            ########Misc functions tab (logout and so on)########
+            TabbedPanelItem:
+                text:'Func'
+                ScrollView
+                    size: self.size
+                #Label:
+                #    text:'lets start with something, and end with nothing'
+                    GridLayout:
+                        id:function_pane
+                        size_hint_y: None
+                        height: self.minimum_height
+                        cols: 1
+                        row_default_height: root.height/13
+            
+        
+        
+        
+        
+        
+        
+        
+        
+    ########BottomBar section########
+    BoxLayout:
+        size_hint_y:.05
+        Label:
+            id:target_label
+            font_size:11
+            text_size: self.size
+            halign: 'left'
+            shorten:True
+            shorten_from:'right'
+            text:'t:-'
+        Label:
+            id:item_label
+            font_size:11
+            text_size: self.size
+            shorten:True
+            shorten_from:'right'
+            halign: 'center'
+            text:'i:-'
+        Label:
+            id:weapon_label
+            font_size:11
+            text_size: self.size
+            shorten:True
+            shorten_from:'right'
+            halign: 'right'
+            text:'w:-'    
+
+            
+
+            
+<FillLabel@Label>:
+    font_size:self.height*.7
+    valign:'middle'
+    text_size: self.size
+    shorten:True
+    shorten_from:'right'    
+<FillButton@Button>:
+    font_size:self.height*.7
+    valign:'middle'        
+    text_size: self.size
+    shorten:True
+    shorten_from:'right'            
+            
+            
+            
+<ClipLabel@Label>:
+    font_size:13
+    text_size: self.size
+    shorten:True
+    shorten_from:'right'
+    valign:'middle'
+<ClipButton@Button>:
+    font_size:13
+    text_size: self.size
+    shorten:True
+    shorten_from:'right'
+    valign:'middle'
+    
+    
+<LoginLayout@GridLayout>
+    cols:2
+    row_default_height: '40dp'
+    
+    
+<MapButton@Button>:
+    height:self.width
+    text_size: self.size
+    font_size: 11
+    
+<MessageLabel@Label>
+    size_hint_y: None
+    text_size: self.width, None
+    font_size:12
+    height: self.texture_size[1]
+    
+<SpinnerOption>:
+    text_size: self.size
+    shorten:True
+    shorten_from:'right'
+    text_size: self.size
+    valign:'middle'
+    halign:'center'
+    height:35
+    
+<MySpinner@Spinner>:
+    text_size: self.size
+    valign:'middle'
+    halign:'center'
+    shorten:True
+    shorten_from:'right'
+    max_lines:2    
