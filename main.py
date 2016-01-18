@@ -105,6 +105,7 @@ class Holder(BoxLayout):
         self.c_dat = api.get_c_dat()
         print('updating gui')
         if self.c_dat['connected']:
+            print('working on stats')
             #Refresh the stats
             self.name.text = self.c_dat['name']
             self.ap.text = self.c_dat['ap']
@@ -113,6 +114,7 @@ class Holder(BoxLayout):
             self.mo.text = self.c_dat['mo']
             
             #refresh the upper message logs
+            print('working on messages')
             if self.c_dat['error']:
                 self.log.text = self.c_dat['error']
             else:
@@ -122,6 +124,7 @@ class Holder(BoxLayout):
             
             if self.c_dat['hp'] != '0':
                 #restock the inventory
+                print('working on inventory')
                 self.inv_cont.clear_widgets()
 
                 #Headings
@@ -142,12 +145,14 @@ class Holder(BoxLayout):
                 self.skill_pane.add_widget(ClipLabel(text='Skill',size_hint_x=.7))
                 self.skill_pane.add_widget(ClipLabel(text='mp',size_hint_x=.15,halign='center'))
                 
+                print('working on skills')
                 for s in self.c_dat['skills']:
                     btn = ClipButton(text=s,size_hint_x=.7)
                     btn.bind(on_press=partial(self.use_skill, s))
                     self.skill_pane.add_widget(btn)
                     self.skill_pane.add_widget(ClipLabel(text='??',size_hint_x=.3))
                 
+                print('working on spells')
                 if self.c_dat['spells']:
                     if self.c_dat['spells']['cast']:
                         self.skill_pane.add_widget(ClipLabel(text='Spell (memory)',size_hint_x=.7))
@@ -170,7 +175,7 @@ class Holder(BoxLayout):
                             
                             self.skill_pane.add_widget(ClipLabel(text='??',size_hint_x=.3))            
                 
-                    
+                print('working on targets')
                 #Stock the target list
                 self.target_pane.clear_widgets()
                 for key, l in self.c_dat['objects'].iteritems():
@@ -195,7 +200,8 @@ class Holder(BoxLayout):
                             self.target_pane.add_widget(lvllab)
                             self.target_pane.add_widget(hplab)
                             self.target_pane.add_widget(mplab)
-                        
+                            
+                print('working on map')        
                 #Make the map
                 self.map_pane.clear_widgets()
                 i=0
@@ -232,7 +238,7 @@ class Holder(BoxLayout):
                 h = len(t['neutral']) + len(t['hostile']) + len(t['enemy'])
                 self.tile_contents.text = ('Factionmates: %s, friendlies: %s, precious violence recipients: %s' % (f,a,h))
                 
-                        
+                print('working on dropdowns')
                 #Populate the weapon dropdown
                 if self.c_dat['weapons']:
                     vals = []
@@ -247,11 +253,13 @@ class Holder(BoxLayout):
                         vals.append(w[0])            
                     self.charge_dropdown.values=vals
                 
+                print('working on messages')
                 #Populate the message panel
                 self.message_pane.clear_widgets()
                 for m in self.c_dat['log']:
                     self.message_pane.add_widget(MessageLabel(text=m))
                     
+                print('working on actions')
                 #Put stuff in the action pane, if necessary
                 self.ids['action_pane'].clear_widgets()
                 #Put in the portals
