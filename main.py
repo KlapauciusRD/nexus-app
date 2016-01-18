@@ -175,14 +175,26 @@ class Holder(BoxLayout):
                 self.target_pane.clear_widgets()
                 for key, l in self.c_dat['objects'].iteritems():
                     if l:
-                        btn = Button(text=key,on_press=(partial(self.set_target_object,key)))
+                        btn = Button(text=key,size_hint_x = .7,on_press=(partial(self.set_target_object,key)))
                         self.target_pane.add_widget(btn)
+                        
+
                 for key, l in self.c_dat['targets'].iteritems():
                     if l:
-                        self.target_pane.add_widget(Label(text=key))
+                        self.target_pane.add_widget(Label(text=key,size_hint_x = .7))
+                        self.target_pane.add_widget(Label(text = 'lvl',size_hint_x = .1))
+                        self.target_pane.add_widget(Label(text = 'hp',size_hint_x = .1))
+                        self.target_pane.add_widget(Label(text = 'mp',size_hint_x = .1))
                         for t in l:
-                            btn = Button(text=t[0],on_press=(partial(self.set_target,t)))
+                            btn = Button(text=t[0],on_press=(partial(self.set_target,t)),size_hint_x = .67)
+                            lvllab = Label(text=t[2],size_hint_x = .11)
+                            hplab = Label(text=t[3],size_hint_x = .11,color = (1,0,0,1))
+                            mplab = Label(text=t[4],size_hint_x = .11, color = (.4,.5,.95,1))
+                            
                             self.target_pane.add_widget(btn)
+                            self.target_pane.add_widget(lvllab)
+                            self.target_pane.add_widget(hplab)
+                            self.target_pane.add_widget(mplab)
                         
                 #Make the map
                 self.map_pane.clear_widgets()

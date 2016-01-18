@@ -20,8 +20,8 @@ def page_load(postData={}, quick = False):
         
         #Scrape info from the soup
         ref_all(tree)
-
-    return
+    if not quick:
+        return tree
 
 ###Code for logging in and out###
 def login(un,pw):
@@ -175,23 +175,50 @@ def loc_ref(tag):
     c_dat['location'] = tag.text_content()
 
 #Target ref should probably scrape current hp. Stretch goal.
-def target_ref(a):
-    #Back out if we've gotten the faction sh link
-    if a.attrib['href'][:32] == 'modules.php?name=Game&op=faction':
-        return
-    #grab relationship
-    relationship = a.attrib['class']
+def target_ref(characters, levels, stats):
+    # Remove faction link if we are on a SH tile:
+    if characters:    
+        if characters[0].attrib['href'][:32] == 'modules.php?name=Game&op=faction':
+            characters = characters[1:]
+
+        #Go through all the characters. Currently completely ignores pets, despite them being passed in the characters variable.
+        for i in range(len(levels)):
+            name = characters[i].text
+            relationship = characters[i].attrib['class']
+            cID = characters[i].attrib['href'].split("'")[-2]
+            level = levels[i].text_content()
+            
+            hp_test = stats[2*i].attrib['src'][-5]
+            if hp_test == '1':
+                hp = 'Max'
+            elif hp_test == '2':
+                hp = 'High'
+            elif hp_test == '3':
+                hp = 'Low'
+            elif hp_test == '4':
+                hp = 'Dire'
+            mp_test = stats[2*i+1].attrib['src'][-5]
+            if mp_test == '1':
+                mp = 'Max'
+            elif mp_test == '2':
+                mp = 'High'
+            elif mp_test == '3':
+                mp = 'Low'
+            elif mp_test == '4':
+                mp = 'Out'
+            c_dat['targets'][relationship].append([name,cID,level,hp,mp])
+    
     #Check if it's a pet or a person.
     #Person case:
-    if not 'title' in a.attrib:
-        name = a.text
-        cID = a.attrib['href'].split("'")[-2]
-        c_dat['targets'][relationship].append([name,cID])
+    # if not 'title' in a.attrib:
+        # name = a.text
+        # cID = a.attrib['href'].split("'")[-2]
+        
     #Pet case:
-    else:
-        name = a.text
-        pID = a.attrib['href'].split('=')[-1]
-        c_dat['pets'][relationship].append([name,pID])
+    # else:
+        # name = a.text
+        # pID = a.attrib['href'].split('=')[-1]
+        # c_dat['pets'][relationship].append([name,pID])
 
 ###Refs from the side bar###
 def inv_ref(sidebar):
@@ -343,7 +370,6 @@ def ref_all(tree):
                 elif f.attrib['name'] == 'wardattack':
                     c_dat['objects']['ward']= True
                     combat_ref(f)
-                    print('testing combat stuff')
                 elif f.attrib['name'] == 'doorattack':
                     c_dat['objects']['door']= True
                     combat_ref(f)
@@ -354,9 +380,12 @@ def ref_all(tree):
             loc_ref(main_panel.xpath('b')[0])
                     
             #Parse the characters and pets, which are 'a' elements
-            characters = main_panel.xpath('a[@class]')
-            for c in characters:
-                target_ref(c)
+            character_names = main_panel.xpath('a[@class]')
+            character_levels = main_panel.xpath("*[contains(@href,'modules.php?name=Game&op=character&id')]")
+            # for i in character_levels:
+                # print(i.text_content())
+            character_stats = main_panel.xpath("img[@height='12']")
+            target_ref(character_names,character_levels,character_stats)
             
       
             
