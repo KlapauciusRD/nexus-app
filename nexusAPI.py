@@ -16,10 +16,13 @@ def page_load(postData={}, quick = False):
     #Now skip processing the page if we want to just spam something
     if not quick:#Forgo scraping on quick page load
         #Do some processing. parse with lxml
+        print('parsing page')
         tree=html.fromstring(p.content)
         
         #Scrape info from the soup
+        
         ref_all(tree)
+        print('finished parsing page')
     if not quick:
         return tree
 
@@ -219,7 +222,7 @@ def target_ref(characters, levels, stats):
         # name = a.text
         # pID = a.attrib['href'].split('=')[-1]
         # c_dat['pets'][relationship].append([name,pID])
-
+    return
 ###Refs from the side bar###
 def inv_ref(sidebar):
     inv_content = []
