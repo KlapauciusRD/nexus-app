@@ -106,7 +106,7 @@
             size_hint_y:.4
             text:'last message \nshould wrap'
         
-    #This contains the tabbed panels
+    ###This contains the tabbed panels##
     BoxLayout:
         TabbedPanel:
             tab_height:self.width/10
@@ -135,15 +135,15 @@
                     ScrollView
                         
                         size: self.size
-                        GridLayout:
-                            size_hint_y: None
-                            height: self.minimum_height
-                            cols: 2
-                            id:inv_cont
-                            size_hint_y: None
-                            cols: 3
-                            row_default_height: '20dp'
-                            row_force_default: True
+                        id: inv_cont
+                        # GridLayout:
+                            # size_hint_y: None
+                            # height: self.minimum_height
+                            # id:inv_cont
+                            # size_hint_y: None
+                            # cols: 3
+                            # row_default_height: '20dp'
+                            # row_force_default: True
                             
             ########Map tab#######
             TabbedPanelItem:
@@ -431,3 +431,10 @@
     shorten:True
     shorten_from:'right'
     max_lines:2    
+    
+<InvGridLayout@GridLayout>:
+    size_hint_y: None
+    height: self.minimum_height
+    cols: 3
+    row_default_height: '20dp'
+    row_force_default: True
