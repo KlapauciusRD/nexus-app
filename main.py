@@ -273,6 +273,7 @@ class Holder(BoxLayout):
 
         #If not connected to a character, make the character list on the functions page
         elif self.c_dat['screen'] == 'char_page':
+			self.name.text = "Pick char @ func tab"
             self.function_pane.clear_widgets()
             self.function_pane.cols = 1
 
@@ -292,6 +293,7 @@ class Holder(BoxLayout):
                 self.function_pane.add_widget(btn)
                 self.function_pane.add_widget(box)
         elif self.c_dat['screen'] == 'login':
+			self.name.test = "login @ func tab"
             self.function_pane.clear_widgets()
             self.function_pane.cols = 2
             self.function_pane.add_widget(Label(text='username'))
