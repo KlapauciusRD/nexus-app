@@ -78,7 +78,7 @@ class Holder(BoxLayout):
     
     def __init__(self, **kwargs):
         super(Holder, self).__init__(**kwargs)
-        self.inv_cont.bind(minimum_height=self.inv_cont.setter('height'))
+        #self.inv_cont.bind(minimum_height=self.inv_cont.setter('height'))
         #self.target_pane.bind(minimum_height=self.target_pane.setter('height'))
         
         self.weapon = ''
@@ -126,19 +126,19 @@ class Holder(BoxLayout):
                 #restock the inventory
                 print('working on inventory')
                 self.inv_cont.clear_widgets()
-
+                grid = InvGridLayout()
                 #Headings
-                self.inv_cont.add_widget(ClipLabel(text='Item',size_hint_x=.7))
-                self.inv_cont.add_widget(ClipLabel(text='#',size_hint_x=.15,halign='center'))
-                self.inv_cont.add_widget(ClipLabel(text='W',size_hint_x=.15,halign='center'))
+                grid.add_widget(ClipLabel(text='Item',size_hint_x=.7))
+                grid.add_widget(ClipLabel(text='#',size_hint_x=.15,halign='center'))
+                grid.add_widget(ClipLabel(text='W',size_hint_x=.15,halign='center'))
                 #Add individual items
                 for i in self.c_dat['inv_trim']:
                     btn = ClipButton(text=i[0],size_hint_x=.7)
                     btn.bind(on_press=partial(self.set_item, i))
-                    self.inv_cont.add_widget(btn)
-                    self.inv_cont.add_widget(ClipLabel(text=i[2],size_hint_x=.15,halign='center'))
-                    self.inv_cont.add_widget(ClipLabel(text=i[3],size_hint_x=.15,halign='center'))
-
+                    grid.add_widget(btn)
+                    grid.add_widget(ClipLabel(text=i[2],size_hint_x=.15,halign='center'))
+                    grid.add_widget(ClipLabel(text=i[3],size_hint_x=.15,halign='center'))
+                self.inv_cont.add_widget(grid)
                 #restock the skills
                 self.skill_pane.clear_widgets()
                 
@@ -182,6 +182,9 @@ class Holder(BoxLayout):
                     if l:
                         btn = Button(text=key,size_hint_x = .7,on_press=(partial(self.set_target_object,key)))
                         self.target_pane.add_widget(btn)
+                        self.target_pane.add_widget(Label(text = ' ',size_hint_x = .1))
+                        self.target_pane.add_widget(Label(text = ' ',size_hint_x = .1))
+                        self.target_pane.add_widget(Label(text = ' ',size_hint_x = .1))
                         
 
                 for key, l in self.c_dat['targets'].iteritems():
@@ -282,7 +285,7 @@ class Holder(BoxLayout):
                 btn = ClipButton(text = c[0])
                 btn.bind(on_press=partial(self.connect_character,c[9]))
                 box = BoxLayout()
-                dict = {1:(1,1,1,1),2:(0,1,0,1),3:(1,0,0,1),4:(0,0,1,1)}
+                dict = {1:(1,1,1,1),2:(0,1,0,1),3:(1,0,0,1),4:(.4,.5,.95,1)}
                 for key, val in dict.iteritems():
                     label = ClipLabel(text=c[key],color=val)
                     if key ==1:
@@ -480,7 +483,8 @@ class LoginGridLayout(GridLayout):
     pass
 class SpinnerOption(Button):
     pass
-
+class InvGridLayout(GridLayout):
+    pass
     
 ###Build the app###
 class NexusApp(App):
