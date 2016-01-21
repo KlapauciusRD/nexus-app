@@ -132,18 +132,11 @@
                         Button:
                             text:'Go'
                             on_press:root.item_context_go()
-                    ScrollView
-                        
+                    ListView
                         size: self.size
                         id: inv_cont
-                        # GridLayout:
-                            # size_hint_y: None
-                            # height: self.minimum_height
-                            # id:inv_cont
-                            # size_hint_y: None
-                            # cols: 3
-                            # row_default_height: '20dp'
-                            # row_force_default: True
+                        
+                        
                             
             ########Map tab#######
             TabbedPanelItem:
@@ -438,3 +431,17 @@
     cols: 3
     row_default_height: '20dp'
     row_force_default: True
+    
+<InvListButton@ListItemButton>:
+    font_size:13
+    text_size: self.size
+    shorten:True
+    shorten_from:'right'
+    valign:'middle'
+<InvListLabel@ListItemLabel>:
+    font_size:13
+    text_size: self.size
+    shorten:True
+    shorten_from:'right'
+    valign:'middle'
+    
