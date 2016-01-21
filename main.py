@@ -182,9 +182,9 @@ class Holder(BoxLayout):
                     if l:
                         btn = Button(text=key,size_hint_x = .7,on_press=(partial(self.set_target_object,key)))
                         self.target_pane.add_widget(btn)
-                        self.target_pane.add_widget(Label(text = ' ',size_hint_x = .1))
-                        self.target_pane.add_widget(Label(text = ' ',size_hint_x = .1))
-                        self.target_pane.add_widget(Label(text = ' ',size_hint_x = .1))
+                        self.target_pane.add_widget(Label(size_hint_x = .1))
+                        self.target_pane.add_widget(Label(size_hint_x = .1))
+                        self.target_pane.add_widget(Label(size_hint_x = .1))
                         
 
                 for key, l in self.c_dat['targets'].iteritems():
