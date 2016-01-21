@@ -15,6 +15,9 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button 
 from kivy.uix.dropdown import DropDown
 from kivy.uix.textinput import TextInput
+from kivy.uix.listview import (ListView, ListItemButton, ListItemLabel,
+                               CompositeListItem)
+from kivy.adapters.dictadapter import DictAdapter
 
 from kivy.utils import get_color_from_hex
 
@@ -30,6 +33,63 @@ __version__ = "0.0.3"
 
 #Builder.load_file('C:\\Users\\ckswi\\Google Drive\\Nexus\\nexusApp\\nexus.kv') #LAPTOP
 #Builder.load_file('C:\Users\CWPC\Google Drive\Nexus\nexusApp\nexus.kv') #PC
+
+def find_in(string,lists):
+    for list in lists:
+        if string == list[0]:
+            return list
+
+def inv_to_dict_adapter(inv):
+    inv_dict = {}
+    inv_ints = range(len(inv))
+    for i in inv_ints:
+        item = inv[i]
+        item_dict = {
+                    'text':item[0],
+                    'qty':item[2],
+                    'wgt':item[3],
+                    'id':item[4],
+                    'is_selected':False
+                    }
+        inv_dict[str(i)] = item_dict
+        
+        
+        
+
+    
+    inv_args_converter = lambda row_index, item: \
+        {'text': item['text'],
+         'size_hint_y': None,
+         'height': 25,
+         'cls_dicts': [{'cls': InvListButton,
+                        'kwargs': {'text': item['text'],'size_hint_x':.8}},
+                       {'cls': InvListLabel,
+                        'kwargs': {'text': item['qty'],'size_hint_x':.1}},
+                       {'cls': InvListLabel,
+                        'kwargs': {'text': item['wgt'],'size_hint_x':.1}}
+                        ]}
+                        
+    inv_dict_adapter = DictAdapter(sorted_keys=inv_ints,
+                               data=inv_dict,
+                               args_converter=inv_args_converter,
+                               selection_mode='single',
+                               propagate_selection_to_data=True,
+                               cls=CompositeListItem)
+    
+    return inv_dict_adapter
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 class Holder(BoxLayout):
     #IDs for Stat bar
@@ -123,22 +183,15 @@ class Holder(BoxLayout):
             
             
             if self.c_dat['hp'] != '0':
-                #restock the inventory
-                print('working on inventory')
-                self.inv_cont.clear_widgets()
-                grid = InvGridLayout()
-                #Headings
-                grid.add_widget(ClipLabel(text='Item',size_hint_x=.7))
-                grid.add_widget(ClipLabel(text='#',size_hint_x=.15,halign='center'))
-                grid.add_widget(ClipLabel(text='W',size_hint_x=.15,halign='center'))
-                #Add individual items
-                for i in self.c_dat['inv_trim']:
-                    btn = ClipButton(text=i[0],size_hint_x=.7)
-                    btn.bind(on_press=partial(self.set_item, i))
-                    grid.add_widget(btn)
-                    grid.add_widget(ClipLabel(text=i[2],size_hint_x=.15,halign='center'))
-                    grid.add_widget(ClipLabel(text=i[3],size_hint_x=.15,halign='center'))
-                self.inv_cont.add_widget(grid)
+            
+                inv_dict_adapter = inv_to_dict_adapter(self.c_dat['inv_trim'])
+                inv_dict_adapter.bind(on_selection_change = self.set_item)
+                self.inv_cont.adapter = inv_dict_adapter
+                
+
+                
+                
+                
                 #restock the skills
                 self.skill_pane.clear_widgets()
                 
@@ -401,6 +454,18 @@ class Holder(BoxLayout):
     def set_item(self,i,button):    
         self.item = i[4]
         self.item_label.text = 'i:'+i[0]
+        
+    def set_item(self,adapter):
+        #self.item = i[4]
+        #self.item_label.text = 'i:'+i[0]
+        
+        if adapter.selection:
+            item_data = find_in(adapter.selection[0].text, self.c_dat['inv_trim'])
+            self.item = item_data[4]
+            self.item_label.text = 'i:'+item_data[0]
+
+
+        
     
     def use(self):
         self.c_dat = api.use(self.item)
@@ -485,7 +550,10 @@ class SpinnerOption(Button):
     pass
 class InvGridLayout(GridLayout):
     pass
-    
+class InvListButton(ListItemButton):
+    pass
+class InvListLabel(ListItemLabel):
+    pass
 ###Build the app###
 class NexusApp(App):
     def on_pause(self):
