@@ -34,11 +34,26 @@ __version__ = "0.0.3"
 #Builder.load_file('C:\\Users\\ckswi\\Google Drive\\Nexus\\nexusApp\\nexus.kv') #LAPTOP
 #Builder.load_file('C:\Users\CWPC\Google Drive\Nexus\nexusApp\nexus.kv') #PC
 
+#Searches for a string in a list of lists as the first element of the sublists
 def find_in(string,lists):
     for list in lists:
         if string == list[0]:
             return list
 
+#Searches for a string in a dict of lists of lists as the first element of the sublists
+def find_in_in(string,listss):
+    for rel, lists in listss.iteritems():
+        for list in lists:
+            if list:
+                if string == list[0]:
+                    return list
+
+def join_adapter_dict(dict1,dict2):
+    
+    
+    
+    
+                    
 def inv_to_dict_adapter(inv):
     inv_dict = {}
     inv_ints = range(len(inv))
@@ -78,6 +93,53 @@ def inv_to_dict_adapter(inv):
     
     return inv_dict_adapter
 
+def targets_to_dict_adapter(target_lists):
+    targets_dict = {}
+    key = 0
+    for rel,target_list in target_lists.iteritems():
+        target_ints = range(len(target_list))
+        head = {'text':rel,'lvl':'','hp':'','mp':'','is_selected':False}
+        targets_dict[str(key)] = head
+        print(key)
+        print(head)
+        for i in target_ints:
+            target = target_list[i]
+            target_dict = {
+                        'text':target[0],
+                        'lvl':target[2],
+                        'hp':target[3],
+                        'mp':target[4],
+                        'is_selected':False
+                        }
+            targets_dict[str(key+i+1)] = target_dict
+        
+        
+    
+    target_ints = ["{0}".format(index) for index in range(key)]
+
+    
+    target_args_converter = lambda row_index, target: \
+        {'text': target['text'],
+         'size_hint_y': None,
+         'height': 25,
+         'cls_dicts': [{'cls': InvListButton,
+                        'kwargs': {'text': target['text'],'size_hint_x':.7}},
+                       {'cls': InvListLabel,
+                        'kwargs': {'text': target['lvl'],'size_hint_x':.1}},
+                       {'cls': InvListLabel,
+                        'kwargs': {'text': target['hp'],'color':(1,0,0,1),'size_hint_x':.1}},
+                       {'cls': InvListLabel,
+                        'kwargs': {'text': target['mp'],'color':(.4,.5,.95,1),'size_hint_x':.1}}
+                        ]}
+                        
+    target_dict_adapter = DictAdapter(sorted_keys=target_ints,
+                               data=targets_dict,
+                               args_converter=target_args_converter,
+                               selection_mode='single',
+                               propagate_selection_to_data=True,
+                               cls=CompositeListItem)
+
+    return target_dict_adapter
 
 
 
@@ -183,11 +245,12 @@ class Holder(BoxLayout):
             
             
             if self.c_dat['hp'] != '0':
-                print('test:begin inventory')
+
+                #Run the Inventory adapter
                 inv_dict_adapter = inv_to_dict_adapter(self.c_dat['inv_trim'])
                 inv_dict_adapter.bind(on_selection_change = self.set_item)
                 self.inv_cont.adapter = inv_dict_adapter
-                print('test:end inventory')
+
 
                 
                 
@@ -230,32 +293,38 @@ class Holder(BoxLayout):
                 
                 print('working on targets')
                 #Stock the target list
-                self.target_pane.clear_widgets()
-                for key, l in self.c_dat['objects'].iteritems():
-                    if l:
-                        btn = Button(text=key,size_hint_x = .7,on_press=(partial(self.set_target_object,key)))
-                        self.target_pane.add_widget(btn)
-                        self.target_pane.add_widget(Label(size_hint_x = .1))
-                        self.target_pane.add_widget(Label(size_hint_x = .1))
-                        self.target_pane.add_widget(Label(size_hint_x = .1))
+
+                
+                
+                targets_adapter = targets_to_dict_adapter(self.c_dat['targets'])
+                targets_adapter.bind(on_selection_change = self.set_target)
+                self.target_pane.adapter = targets_adapter
+                
+                # for key, l in self.c_dat['objects'].iteritems():
+                    # if l:
+                        # btn = Button(text=key,size_hint_x = .7,on_press=(partial(self.set_target_object,key)))
+                        # self.target_pane.add_widget(btn)
+                        # self.target_pane.add_widget(Label(size_hint_x = .1))
+                        # self.target_pane.add_widget(Label(size_hint_x = .1))
+                        # self.target_pane.add_widget(Label(size_hint_x = .1))
                         
 
-                for key, l in self.c_dat['targets'].iteritems():
-                    if l:
-                        self.target_pane.add_widget(Label(text=key,size_hint_x = .7))
-                        self.target_pane.add_widget(Label(text = 'lvl',size_hint_x = .1))
-                        self.target_pane.add_widget(Label(text = 'hp',size_hint_x = .1))
-                        self.target_pane.add_widget(Label(text = 'mp',size_hint_x = .1))
-                        for t in l:
-                            btn = Button(text=t[0],on_press=(partial(self.set_target,t)),size_hint_x = .67)
-                            lvllab = Label(text=t[2],size_hint_x = .11)
-                            hplab = Label(text=t[3],size_hint_x = .11,color = (1,0,0,1))
-                            mplab = Label(text=t[4],size_hint_x = .11, color = (.4,.5,.95,1))
+                # for key, l in self.c_dat['targets'].iteritems():
+                    # if l:
+                        # self.target_pane.add_widget(Label(text=key,size_hint_x = .7))
+                        # self.target_pane.add_widget(Label(text = 'lvl',size_hint_x = .1))
+                        # self.target_pane.add_widget(Label(text = 'hp',size_hint_x = .1))
+                        # self.target_pane.add_widget(Label(text = 'mp',size_hint_x = .1))
+                        # for t in l:
+                            # btn = Button(text=t[0],on_press=(partial(self.set_target,t)),size_hint_x = .67)
+                            # lvllab = Label(text=t[2],size_hint_x = .11)
+                            # hplab = Label(text=t[3],size_hint_x = .11,color = (1,0,0,1))
+                            # mplab = Label(text=t[4],size_hint_x = .11, color = (.4,.5,.95,1))
                             
-                            self.target_pane.add_widget(btn)
-                            self.target_pane.add_widget(lvllab)
-                            self.target_pane.add_widget(hplab)
-                            self.target_pane.add_widget(mplab)
+                            # self.target_pane.add_widget(btn)
+                            # self.target_pane.add_widget(lvllab)
+                            # self.target_pane.add_widget(hplab)
+                            # self.target_pane.add_widget(mplab)
                             
                 print('working on map')        
                 #Make the map
@@ -395,9 +464,13 @@ class Holder(BoxLayout):
         self.update_gui()
     
     ###Combat stuff###
-    def set_target(self,t,button):
-        self.target = t[1]
-        self.target_label.text = 't:'+t[0]
+    def set_target(self,adapter):
+        if adapter.selection:
+            target_data = find_in_in(adapter.selection[0].text, self.c_dat['targets'])
+            if target_data:
+                self.target = target_data[1]
+                self.target_label.text = 't:'+target_data[0]
+            
         
     def set_target_object(self,t,button):
         self.target = t
@@ -451,14 +524,7 @@ class Holder(BoxLayout):
         self.update_gui()
     
     #Item stuff
-    def set_item(self,i,button):    
-        self.item = i[4]
-        self.item_label.text = 'i:'+i[0]
-        
     def set_item(self,adapter):
-        #self.item = i[4]
-        #self.item_label.text = 'i:'+i[0]
-        
         if adapter.selection:
             item_data = find_in(adapter.selection[0].text, self.c_dat['inv_trim'])
             self.item = item_data[4]

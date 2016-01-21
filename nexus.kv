@@ -132,6 +132,17 @@
                         Button:
                             text:'Go'
                             on_press:root.item_context_go()
+                    BoxLayout:
+                        size_hint_y:.1
+                        Label:
+                            text:'Item'
+                            size_hint_x:.8
+                        Label:
+                            text:'qty'
+                            size_hint_x:.1
+                        Label:
+                            text:'wgt'
+                            size_hint_x:.1
                     ListView
                         size: self.size
                         id: inv_cont
@@ -264,18 +275,25 @@
                         
                             
                     #Available targets
-                    ScrollView
+                    BoxLayout:
+                        size_hint_y:.1
+                        Label:
+                            text:'Name'
+                            size_hint_x:.7
+                        Label:
+                            text:'lvl'
+                            size_hint_x:.1
+                        Label:
+                            text:'hp'
+                            size_hint_x:.1
+                        Label:
+                            text:'mp'
+                            size_hint_x:.1
+                    ListView
                         size: self.size
-                        GridLayout:
-                            size_hint_y: None
-                            height: self.minimum_height
-                            cols: 4
-                            id:target_pane
-                            size_hint_y: None
-                            row_default_height: '20dp'
-                            row_force_default: True
+                        id: target_pane
                         
-
+                        
             ########Skills tab########
             TabbedPanelItem:
                 text:'Skill'
