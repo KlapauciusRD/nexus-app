@@ -278,7 +278,7 @@ class Holder(BoxLayout):
         self.item = ''
         self.charge = ''
         #Make the map
-        self.map_data = {}
+
         for i in range(25):
             btn = MapButton(text=(''),id=str(i))
             if i in [7,8,9]:
@@ -287,7 +287,7 @@ class Holder(BoxLayout):
                 btn.bind(on_press=partial(self.move,i-8))
             if i in [17,18,19]:
                 btn.bind(on_press=partial(self.move,i-10))
-            self.map_pane.add_widget(self.map_data[i])
+            self.map_pane.add_widget(btn)
         api.page_load()
         self.refresh_quick()
             
