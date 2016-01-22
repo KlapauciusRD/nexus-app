@@ -27,7 +27,7 @@
     default_action_pane:default_action_pane
     
     #IDs for skill page
-    skill_pane:skill_pane
+    ability_pane:ability_pane
     
     #IDs for Map panel
     map_pane:map_pane
@@ -300,17 +300,9 @@
                 BoxLayout:
                     orientation:'vertical'                
 
-                    ScrollView
+                    ListView
                         size: self.size
-                        GridLayout:
-                            size_hint_y: None
-                            height: self.minimum_height
-                            cols: 2
-                            id:skill_pane
-                            size_hint_y: None
-                            cols: 2
-                            row_default_height: root.height/15
-                            row_force_default: True    
+                        id: ability_pane
             
             ########Messages tab########
             TabbedPanelItem:
@@ -333,14 +325,14 @@
                             on_press: root.say(message_input.text,'whisper')
                     ScrollView
                         size: self.size
-                        GridLayout:
+                        Label:
                             size_hint_y: None
-                            height: self.minimum_height
                             id:message_pane
-                            size_hint_y: None
-                            cols: 1
-                            row_default_height: '20dp'
-            
+                            text_size: self.width, None
+                            height: self.texture_size[1]
+                            font_size:16
+                            
+                            
             ########Misc functions tab (logout and so on)########
             TabbedPanelItem:
                 text:'Func'

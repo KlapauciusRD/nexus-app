@@ -42,18 +42,33 @@ def find_in(string,lists):
 
 #Searches for a string in a dict of lists of lists as the first element of the sublists
 def find_in_in(string,listss):
-    for rel, lists in listss.iteritems():
+    for type, lists in listss.iteritems():
         for list in lists:
             if list:
                 if string == list[0]:
-                    return list
+                    return list,type
+                    
+def find_in_in_stupid(string,listss):
+    print('string')
+    for type, lists in listss.iteritems():
+        for list in lists:
+            if list:
+                if string == list['text']:
+                    print(list,type)
+                    return list,type
+                    
 
 def join_adapter_dict(dict1,dict2):
+    #should only join in the case where there are actual things to join.
+    if len(dict1)==1:
+        dict1 = {}
+    if len(dict2)==1:
+        dict2 = {}
+    sep = len(dict1)
+    for i in range(len(dict2)):
+        dict1[str(i+sep)] = dict2[str(i)]
+    return dict1
     
-    
-    
-    
-                    
 def inv_to_dict_adapter(inv):
     inv_dict = {}
     inv_ints = range(len(inv))
@@ -68,8 +83,8 @@ def inv_to_dict_adapter(inv):
                     }
         inv_dict[str(i)] = item_dict
         
-        
-        
+
+    inv_ints = ["{0}".format(index) for index in range(len(inv))]
 
     
     inv_args_converter = lambda row_index, item: \
@@ -93,16 +108,34 @@ def inv_to_dict_adapter(inv):
     
     return inv_dict_adapter
 
-def targets_to_dict_adapter(target_lists):
+def targets_to_dict_adapter(objects,target_lists):
     targets_dict = {}
-    key = 0
+    
+
+    head = {'text':'Objects','lvl':'','hp':'','mp':'','is_selected':False}
+    targets_dict['0'] = head
+    i=0
+    for object,value in objects.iteritems():
+        print (object,value)
+        if value:
+            i=i+1
+            print(i)
+            object_dict = {
+                            'text':object,
+                            'lvl':'',
+                            'hp':'',
+                            'mp':'',
+                            'is_selected':False
+                            }
+            targets_dict[str(i)] = object_dict
+        
+    
+    
     for rel,target_list in target_lists.iteritems():
-        target_ints = range(len(target_list))
+        rel_dict = {}
         head = {'text':rel,'lvl':'','hp':'','mp':'','is_selected':False}
-        targets_dict[str(key)] = head
-        print(key)
-        print(head)
-        for i in target_ints:
+        rel_dict['0'] = head
+        for i in range(len(target_list)):
             target = target_list[i]
             target_dict = {
                         'text':target[0],
@@ -111,11 +144,16 @@ def targets_to_dict_adapter(target_lists):
                         'mp':target[4],
                         'is_selected':False
                         }
-            targets_dict[str(key+i+1)] = target_dict
-        
-        
+            rel_dict[str(i+1)] = target_dict
+        if not targets_dict:
+            targets_dict = rel_dict
+            
+        else:
+            targets_dict = join_adapter_dict(targets_dict,rel_dict)
+
     
-    target_ints = ["{0}".format(index) for index in range(key)]
+    target_ints = ["{0}".format(index) for index in range(len(targets_dict))]
+    
 
     
     target_args_converter = lambda row_index, target: \
@@ -141,7 +179,87 @@ def targets_to_dict_adapter(target_lists):
 
     return target_dict_adapter
 
+def abilities_to_dict_adapter(ability_lists):
+    ability_dict = {}
 
+    for type,ability_list in ability_lists.iteritems():
+        type_dict = {}
+        head = {'text':type,'lvl':'','hp':'','mp':'','is_selected':False}
+        type_dict['0'] = head
+        for i in range(len(ability_list)):
+            ability = ability_list[i]
+            ability['is_selected'] = False
+            type_dict[str(i+1)] = ability
+            
+        if not ability_dict:
+            ability_dict = type_dict
+        else:
+            ability_dict = join_adapter_dict(ability_dict,type_dict)
+
+    
+    ability_ints = ["{0}".format(index) for index in range(len(ability_dict))]
+    
+
+    
+    ability_args_converter = lambda row_index, ability: \
+        {'text': ability['text'],
+         'size_hint_y': None,
+         'height': 40,
+         'cls_dicts': [{'cls': InvListButton,
+                        'kwargs': {'text': ability['text'],'size_hint_x':.85}},
+                       {'cls': InvListLabel,
+                        'kwargs': {'text': ability['mp'],'color':(.4,.5,.95,1),'size_hint_x':.15}}
+                        ]}
+                        
+    ability_dict_adapter = DictAdapter(sorted_keys=ability_ints,
+                               data=ability_dict,
+                               args_converter=ability_args_converter,
+                               selection_mode='single',
+                               propagate_selection_to_data=True,
+                               cls=CompositeListItem)
+
+    return ability_dict_adapter
+
+# def messages_to_dict_adapter(message_log):
+    # message_dict = {}
+
+    # for type,message_list in message_lists.iteritems():
+        # type_dict = {}
+        # head = {'text':type,'lvl':'','hp':'','mp':'','is_selected':False}
+        # type_dict['0'] = head
+        # for i in range(len(message_list)):
+            # message = message_list[i]
+            # message['is_selected'] = False
+            # type_dict[str(i+1)] = message
+            
+        # if not message_dict:
+            # message_dict = type_dict
+        # else:
+            # message_dict = join_adapter_dict(message_dict,type_dict)
+
+    
+    # message_ints = ["{0}".format(index) for index in range(len(message_dict))]
+    
+
+    
+    # message_args_converter = lambda row_index, message: \
+        # {'text': message['text'],
+         # 'size_hint_y': None,
+         # 'height': 40,
+         # 'cls_dicts': [{'cls': InvListButton,
+                        # 'kwargs': {'text': message['text'],'size_hint_x':.85}},
+                       # {'cls': InvListLabel,
+                        # 'kwargs': {'text': message['mp'],'color':(.4,.5,.95,1),'size_hint_x':.15}}
+                        # ]}
+                        
+    # message_dict_adapter = DictAdapter(sorted_keys=message_ints,
+                               # data=message_dict,
+                               # args_converter=message_args_converter,
+                               # selection_mode='single',
+                               # propagate_selection_to_data=True,
+                               # cls=CompositeListItem)
+
+    # return message_dict_adapter
 
 
 
@@ -179,7 +297,7 @@ class Holder(BoxLayout):
     default_action_pane= ObjectProperty(None)
     
     #IDs for skill page
-    skill_pane = ObjectProperty(None)
+    ability_pane = ObjectProperty(None)
     
     #IDs for Map panel
     map_pane = ObjectProperty(None)
@@ -247,84 +365,23 @@ class Holder(BoxLayout):
             if self.c_dat['hp'] != '0':
 
                 #Run the Inventory adapter
+                print('Working on inventory')
                 inv_dict_adapter = inv_to_dict_adapter(self.c_dat['inv_trim'])
                 inv_dict_adapter.bind(on_selection_change = self.set_item)
                 self.inv_cont.adapter = inv_dict_adapter
 
-
-                
-                
                 
                 #restock the skills
-                self.skill_pane.clear_widgets()
-                
-                self.skill_pane.add_widget(ClipLabel(text='Skill',size_hint_x=.7))
-                self.skill_pane.add_widget(ClipLabel(text='mp',size_hint_x=.15,halign='center'))
-                
                 print('working on skills')
-                for s in self.c_dat['skills']:
-                    btn = ClipButton(text=s,size_hint_x=.7)
-                    btn.bind(on_press=partial(self.use_skill, s))
-                    self.skill_pane.add_widget(btn)
-                    self.skill_pane.add_widget(ClipLabel(text='??',size_hint_x=.3))
-                
-                print('working on spells')
-                if self.c_dat['spells']:
-                    if self.c_dat['spells']['cast']:
-                        self.skill_pane.add_widget(ClipLabel(text='Spell (memory)',size_hint_x=.7))
-                        self.skill_pane.add_widget(ClipLabel(text='mp',size_hint_x=.3,halign='center'))
-                        
-                        for s in self.c_dat['spells']['cast']:
-                            btn = ClipButton(text=s[0],size_hint_x=.7)
-                            btn.bind(on_press=partial(self.cast_spell, s))
-                            self.skill_pane.add_widget(btn)
-                            self.skill_pane.add_widget(ClipLabel(text=s[1],size_hint_x=.3))
-
-                    if self.c_dat['spells']['trigger']:
-                        self.skill_pane.add_widget(ClipLabel(text='Spell (trigger)',size_hint_x=.7))
-                        self.skill_pane.add_widget(ClipLabel(text='mp',size_hint_x=.3,halign='center'))                
-                        
-                        for s in self.c_dat['spells']['trigger']:
-                            btn = ClipButton(text=s[1],size_hint_x=.7)
-                            btn.bind(on_press=partial(self.trigger_spell, s))
-                            self.skill_pane.add_widget(btn)
-                            
-                            self.skill_pane.add_widget(ClipLabel(text='??',size_hint_x=.3))            
+                abilities_adapter = abilities_to_dict_adapter(self.c_dat['abilities'])
+                abilities_adapter.bind(on_selection_change = self.use_ability)
+                self.ability_pane.adapter = abilities_adapter
                 
                 print('working on targets')
                 #Stock the target list
-
-                
-                
-                targets_adapter = targets_to_dict_adapter(self.c_dat['targets'])
+                targets_adapter = targets_to_dict_adapter(self.c_dat['objects'],self.c_dat['targets'])
                 targets_adapter.bind(on_selection_change = self.set_target)
                 self.target_pane.adapter = targets_adapter
-                
-                # for key, l in self.c_dat['objects'].iteritems():
-                    # if l:
-                        # btn = Button(text=key,size_hint_x = .7,on_press=(partial(self.set_target_object,key)))
-                        # self.target_pane.add_widget(btn)
-                        # self.target_pane.add_widget(Label(size_hint_x = .1))
-                        # self.target_pane.add_widget(Label(size_hint_x = .1))
-                        # self.target_pane.add_widget(Label(size_hint_x = .1))
-                        
-
-                # for key, l in self.c_dat['targets'].iteritems():
-                    # if l:
-                        # self.target_pane.add_widget(Label(text=key,size_hint_x = .7))
-                        # self.target_pane.add_widget(Label(text = 'lvl',size_hint_x = .1))
-                        # self.target_pane.add_widget(Label(text = 'hp',size_hint_x = .1))
-                        # self.target_pane.add_widget(Label(text = 'mp',size_hint_x = .1))
-                        # for t in l:
-                            # btn = Button(text=t[0],on_press=(partial(self.set_target,t)),size_hint_x = .67)
-                            # lvllab = Label(text=t[2],size_hint_x = .11)
-                            # hplab = Label(text=t[3],size_hint_x = .11,color = (1,0,0,1))
-                            # mplab = Label(text=t[4],size_hint_x = .11, color = (.4,.5,.95,1))
-                            
-                            # self.target_pane.add_widget(btn)
-                            # self.target_pane.add_widget(lvllab)
-                            # self.target_pane.add_widget(hplab)
-                            # self.target_pane.add_widget(mplab)
                             
                 print('working on map')        
                 #Make the map
@@ -380,9 +437,8 @@ class Holder(BoxLayout):
                 
                 print('working on messages')
                 #Populate the message panel
-                self.message_pane.clear_widgets()
-                for m in self.c_dat['log']:
-                    self.message_pane.add_widget(MessageLabel(text=m))
+                self.message_pane.text = '\n '.join(self.c_dat['log'])
+
                     
                 print('working on actions')
                 #Put stuff in the action pane, if necessary
@@ -466,16 +522,18 @@ class Holder(BoxLayout):
     ###Combat stuff###
     def set_target(self,adapter):
         if adapter.selection:
-            target_data = find_in_in(adapter.selection[0].text, self.c_dat['targets'])
-            if target_data:
-                self.target = target_data[1]
-                self.target_label.text = 't:'+target_data[0]
-            
         
-    def set_target_object(self,t,button):
-        self.target = t
-        print "attacking " + t
-        self.target_label.text = 't:'+t
+            if adapter.selection[0].text in ['ward','fort','door']:
+                self.target = adapter.selection[0].text
+                print "attacking " + adapter.selection[0].text
+                self.target_label.text = 't:'+adapter.selection[0].text
+            elif adapter.selection[0].text not in self.c_dat['targets'].keys():
+                target_data,rel = find_in_in(adapter.selection[0].text, self.c_dat['targets'])
+                if target_data:
+                    self.target = target_data[1]
+                    self.target_label.text = 't:'+target_data[0]
+    
+
         
     def set_charge(self,c):
         if c == "None" or c == "Charges":
@@ -562,18 +620,17 @@ class Holder(BoxLayout):
         self.update_gui()
         
     #Skills stuff
-    def use_skill(self,s,button):
-        api.useSkill(s)
-        self.update_gui()
-
-    def cast_spell(self,s,button):
-        api.castSpell(s[0])
-        self.update_gui()
-
-    def trigger_spell(self,s,button):
-        api.castSpell(s[0])
-        self.update_gui()
-
+    def use_ability(self,adapter):
+        if adapter.selection:
+            if adapter.selection[0].text not in self.c_dat['abilities'].keys():
+                ability_data,type = find_in_in_stupid(adapter.selection[0].text, self.c_dat['abilities'])
+                if ability_data:
+                    print(type)
+                    if type == 'skills':
+                        api.useSkill(ability_data['id'])
+                    elif type in ['cast','trigger']:
+                        api.castSpell(ability_data['id'])
+    
     #ACTIONS stuff
     def door(self,action):
         api.door(action)

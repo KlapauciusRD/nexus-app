@@ -114,22 +114,27 @@ def error_ref(div):
 def spell_ref(f):
 
     if f.attrib['name'] == 'spellother': #Castable spells from memory
-        c_dat['spells']['cast'] = []
+        c_dat['abilities']['cast'] = []
         for s in f[1]:
             value = s.attrib['value']
             text = s.text
-            c_dat['spells']['cast'].append([value,text])
+            mp = ''
+            c_dat['abilities']['cast'].append({'text':text,'id':value,'mp':mp})
 
     if f.attrib['name'] == 'spellattack': #Castable spells from gems
-        c_dat['spells']['trigger'] = []
+        c_dat['abilities']['trigger'] = []
         for s in f[1]:
             iID = s.attrib['value']
             text = s.text
-            c_dat['spells']['trigger'].append([iID,text])
+            mp = ''
+            c_dat['abilities']['trigger'].append({'text':text,'id':iID,'mp':mp})
        
 def skill_ref(f):
 	#This could really have mp and ap info separated
-    c_dat['skills'].append(f[0].attrib['value'])
+    skill_text = f[0].attrib['value']
+    skill_mp = ''
+    c_dat['abilities']['skills'].append({'text':skill_text,'id':skill_text,'mp':skill_mp})
+    
     
 def portal_ref(f):
     portal_stats = f.xpath('input')
@@ -296,11 +301,11 @@ def map_ref(sidebar):
     a_dat['test'] = map_raw
 
 def clean_data():
-    for key in ['portals','skills','pickup','weapons','charges','error']:
+    for key in ['portals','pickup','weapons','charges','error']:
         c_dat[key] = []
-    c_dat['spells']['cast'] = []
-    c_dat['spells']['trigger'] = []
-    c_dat['targets'] = {'faction':[],'ally':[],'friendly':[],'neutral':[],'hostile':[],'enemy':[]}
+
+    c_dat['abilities'] = {'cast':[],'trigger':[],'skills':[]}
+    c_dat['targets'] = {'faction':[],'ally':[],'friendly':[],'neutral':[],'hostile':[],'enemy':[],'objects':[]}
     c_dat['pets'] = {'faction':[],'ally':[],'friendly':[],'neutral':[],'hostile':[],'enemy':[]}
     c_dat['objects'] = {'ward':False,'door':False,'fort':False}
     
@@ -422,7 +427,7 @@ def respawn():
 #Map interactions
 def move(direction, leap = 0):
     postData={'op':'move','direction':direction,'sidebar':'Map'}
-    if "Deactivate Cloak of Air" in c_dat['skills']:
+    if "Deactivate Cloak of Air" in c_dat['abilities']['skills']:
         postData['Gust'] = 'Gust'
         
     p = page_load(postData)
@@ -435,7 +440,7 @@ def move(direction, leap = 0):
 #Door interactions
 def door(action):
     postData={'op':'door','sidebar':'Map'}
-    canseep = any(l=='Deactivate Cloak of Air' for l in c_dat['skills'])
+    canseep = any(l=='Deactivate Cloak of Air' for l in c_dat['abilities']['skills'])
     print('called door')
     print(action)
     
