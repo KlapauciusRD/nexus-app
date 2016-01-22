@@ -220,54 +220,6 @@ def abilities_to_dict_adapter(ability_lists):
 
     return ability_dict_adapter
 
-# def messages_to_dict_adapter(message_log):
-    # message_dict = {}
-
-    # for type,message_list in message_lists.iteritems():
-        # type_dict = {}
-        # head = {'text':type,'lvl':'','hp':'','mp':'','is_selected':False}
-        # type_dict['0'] = head
-        # for i in range(len(message_list)):
-            # message = message_list[i]
-            # message['is_selected'] = False
-            # type_dict[str(i+1)] = message
-            
-        # if not message_dict:
-            # message_dict = type_dict
-        # else:
-            # message_dict = join_adapter_dict(message_dict,type_dict)
-
-    
-    # message_ints = ["{0}".format(index) for index in range(len(message_dict))]
-    
-
-    
-    # message_args_converter = lambda row_index, message: \
-        # {'text': message['text'],
-         # 'size_hint_y': None,
-         # 'height': 40,
-         # 'cls_dicts': [{'cls': InvListButton,
-                        # 'kwargs': {'text': message['text'],'size_hint_x':.85}},
-                       # {'cls': InvListLabel,
-                        # 'kwargs': {'text': message['mp'],'color':(.4,.5,.95,1),'size_hint_x':.15}}
-                        # ]}
-                        
-    # message_dict_adapter = DictAdapter(sorted_keys=message_ints,
-                               # data=message_dict,
-                               # args_converter=message_args_converter,
-                               # selection_mode='single',
-                               # propagate_selection_to_data=True,
-                               # cls=CompositeListItem)
-
-    # return message_dict_adapter
-
-
-
-
-
-
-
-
 
 
 
@@ -325,8 +277,24 @@ class Holder(BoxLayout):
         self.target = ''
         self.item = ''
         self.charge = ''
+        #Make the map
+        self.map_data = {}
+        for i in range(25):
+            btn = MapButton(text=(''),id=str(i))
+            if i in [7,8,9]:
+                btn.bind(on_press=partial(self.move,i-6))
+            if i in [12,14]:
+                btn.bind(on_press=partial(self.move,i-8))
+            if i in [17,18,19]:
+                btn.bind(on_press=partial(self.move,i-10))
+            self.map_pane.add_widget(self.map_data[i])
         api.page_load()
         self.refresh_quick()
+            
+
+
+
+   
             
     #Force a complete data update
     def refresh_data(self):
@@ -384,32 +352,23 @@ class Holder(BoxLayout):
                 self.target_pane.adapter = targets_adapter
                             
                 print('working on map')        
-                #Make the map
-                self.map_pane.clear_widgets()
-                i=0
-                for t in self.c_dat['map']:
-                    i=i+1
-                    #Temporary tile info will just be text
-                    tiletext = [t['type']]
-                    for key, value in t.iteritems():
+
+                    
+                
+                
+                #Fill the map data
+                for c in self.map_pane.children:
+                    i = c.id
+                    tile_data = self.c_dat['map'][int(i)]
+                    tiletext = [tile_data['type']]
+                    for key,value in tile_data.iteritems():
                         if value == True:
                             tiletext.append(key)
                     tiletext = ','.join(tiletext)
-                    btn = MapButton(text=(tiletext),background_color = get_color_from_hex(t['color']))
-                    self.c_dat['leap']=False
-                    if self.c_dat['leap']:
-                        do='nothing'
-                    else:
-                        if i in [7,8,9]:
-                            btn.bind(on_press=partial(self.move,i-6))
-                        if i in [12,14]:
-                            btn.bind(on_press=partial(self.move,i-8))
-                        if i in [17,18,19]:
-                            btn.bind(on_press=partial(self.move,i-10))
-                        
-                        
-                    self.map_pane.add_widget(btn)
-                    
+                    c.text = tiletext
+                    c.background_color = background_color = get_color_from_hex(tile_data['color'])
+
+
                 #Add the current location
                 self.current_location.text = self.c_dat['location']
                 
@@ -439,15 +398,13 @@ class Holder(BoxLayout):
                 #Populate the message panel
                 self.message_pane.text = '\n '.join(self.c_dat['log'])
 
-                    
                 print('working on actions')
-                #Put stuff in the action pane, if necessary
+                #Put stuff in the action pane, if necessary. Not going to listify this, since it should be a very small performance toll
                 self.ids['action_pane'].clear_widgets()
                 #Put in the portals
                 for portal in self.c_dat['portals']:
                     btn = FillButton(text=portal[0],on_press=partial(self.portal,portal))
                     self.action_pane.add_widget(btn)
-                
             else:
                 self.ids['action_pane'].clear_widgets()
                 self.ids['action_pane'].add_widget(FillButton(text = 'Respawn',on_press=self.respawn))
