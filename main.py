@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from kivy.config import Config
 Config.set('graphics', 'width', '500')
 Config.set('graphics', 'height', '900')
@@ -19,11 +22,15 @@ from kivy.uix.listview import (ListView, ListItemButton, ListItemLabel,
                                CompositeListItem)
 from kivy.adapters.dictadapter import DictAdapter
 
+from kivy.core.text.markup import MarkupLabel
+
+
 from kivy.clock import Clock, _default_time as time
 
 from kivy.utils import get_color_from_hex
 
 from functools import partial
+import threading
 
 from kivy.uix.tabbedpanel import TabbedPanel
 from kivy.uix.floatlayout import FloatLayout
@@ -31,7 +38,7 @@ from kivy.uix.floatlayout import FloatLayout
 
 import nexusAPI as api
 
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 
 #Builder.load_file('C:\\Users\\ckswi\\Google Drive\\Nexus\\nexusApp\\nexus.kv') #LAPTOP
 #Builder.load_file('C:\Users\CWPC\Google Drive\Nexus\nexusApp\nexus.kv') #PC
@@ -228,6 +235,7 @@ def abilities_to_dict_adapter(ability_lists):
 
 class Holder(BoxLayout):
     #IDs for Stat bar
+    refresh = ObjectProperty(None)
     name = ObjectProperty(None)
     ap = ObjectProperty(None)
     hp = ObjectProperty(None)
@@ -280,8 +288,7 @@ class Holder(BoxLayout):
         self.target = ''
         self.item = ''
         self.charge = ''
-        #Make the map
-
+        #Make the map, add the movement buttons. Should deal with 
         for i in range(25):
             btn = MapButton(text=(''),id=str(i))
             if i in [6,7,8]:
@@ -291,193 +298,224 @@ class Holder(BoxLayout):
             if i in [16,17,18]:
                 btn.bind(on_press=partial(self.move,i-9))
             self.map_pane.add_widget(btn)
-        api.page_load()
-        self.refresh_quick()
-            
 
+        self.access_api(api.ref_force)
+        self.need_ref = True
+        Clock.schedule_interval(self.update_gui, .1)
+        
+        
 
+    
 
    
             
     #Force a complete data update
     def refresh_data(self):
-        api.ref_force()
-        self.update_gui()
-        pass
+        self.access_api(partial(api.ref_force))
+        self.need_ref = True
+
     
     #This should just update the not currently open screen out of map and inventory
     def refresh_quick(self):
         print('doing quick refresh')
-        api.ref_both()
-        self.update_gui()
+        self.access_api(partial(api.ref_both))
+        self.need_ref = True
         print('quick refresh complete')
         
-    def update_gui(self):
-        self.c_dat = api.get_c_dat()
-        print('updating gui')
-        if self.c_dat['connected']:
-            print('working on stats')
-            #Refresh the stats
-            self.name.text = self.c_dat['name']
-            self.ap.text = self.c_dat['ap']
-            self.hp.text = self.c_dat['hp']
-            self.mp.text = self.c_dat['mp']
-            self.mo.text = self.c_dat['mo']
-            
-            #refresh the upper message logs
-            print('working on messages')
-            if self.c_dat['error']:
-                self.log.text = self.c_dat['error']
-            else:
-                self.log.text = self.c_dat['log'][0]
-            self.status.text = self.c_dat['status']
-            
-            
-            if self.c_dat['hp'] != '0':
-
-                #Run the Inventory adapter
-                print('Working on inventory')
-                inv_dict_adapter = inv_to_dict_adapter(self.c_dat['inv_trim'])
-                inv_dict_adapter.bind(on_selection_change = self.set_item)
-                self.inv_cont.adapter = inv_dict_adapter
-
+    def update_gui(self,clock):
+        if self.need_ref == True and not self.t.is_alive():
+            self.refresh.color = (0,1,0,1)
+            self.need_ref = False
+            self.c_dat = api.get_c_dat()
+            if not self.c_dat['connection']:
+                self.refresh.color = (1,.75,0,1)
+                self.log.text = "!!Internet failure!!"
+                return
                 
-                #restock the skills
-                print('working on skills')
-                abilities_adapter = abilities_to_dict_adapter(self.c_dat['abilities'])
-                abilities_adapter.bind(on_selection_change = self.use_ability)
-                self.ability_pane.adapter = abilities_adapter
+            print('updating gui')
+            if self.c_dat['connected']:
+                print('working on stats')
+                #Refresh the stats
+                self.name.text = self.c_dat['name']
+                self.ap.text = self.c_dat['ap']
+                self.hp.text = self.c_dat['hp']
+                self.mp.text = self.c_dat['mp']
+                self.mo.text = self.c_dat['mo']
                 
-                print('working on targets')
-                #Stock the target list
-                targets_adapter = targets_to_dict_adapter(self.c_dat['objects'],self.c_dat['targets'])
-                targets_adapter.bind(on_selection_change = self.set_target)
-                self.target_pane.adapter = targets_adapter
-                            
-                print('working on map')        
+                #refresh the upper message logs
+                print('working on messages')
+                if self.c_dat['error']:
+                    self.log.text = self.c_dat['error']
+                else:
+                    self.log.text = self.c_dat['log'].split('- ')[1]
+                self.status.text = self.c_dat['status']
+                
+                
+                if self.c_dat['hp'] != '0':
+
+                    #Run the Inventory adapter
+                    print('Working on inventory')
+                    inv_dict_adapter = inv_to_dict_adapter(self.c_dat['inv_trim'])
+                    inv_dict_adapter.bind(on_selection_change = self.set_item)
+                    self.inv_cont.adapter = inv_dict_adapter
 
                     
-                
-                
-                #Fill the map data
-                for c in self.map_pane.children:
-                    i = c.id
-                    tile_data = self.c_dat['map'][int(i)]
-                    tiletext = [tile_data['type']]
-                    for key,value in tile_data.iteritems():
-                        if value == True:
-                            tiletext.append(key)
-                    tiletext = '\n'.join(tiletext)
-                    c.text = tiletext
-                    c.background_color = background_color = get_color_from_hex(tile_data['color'])
-
-
-                #Add the current location
-                self.current_location.text = self.c_dat['location']
-                
-                #Print some basic tile contents on the map page
-                t = self.c_dat['targets']
-                f = len(t['faction'])
-                a = len(t['ally']) + len(t['friendly'])
-                h = len(t['neutral']) + len(t['hostile']) + len(t['enemy'])
-                self.tile_contents.text = ('Factionmates: %s, friendlies: %s, precious violence recipients: %s' % (f,a,h))
-                
-                print('working on dropdowns')
-                #Populate the weapon dropdown
-                if self.c_dat['weapons']:
-                    vals = []
-                    for w in self.c_dat['weapons']:
-                        vals.append(w[0])
-                    self.weapon_dropdown.values=vals
+                    #restock the skills
+                    print('working on skills')
+                    abilities_adapter = abilities_to_dict_adapter(self.c_dat['abilities'])
+                    abilities_adapter.bind(on_selection_change = self.use_ability)
+                    self.ability_pane.adapter = abilities_adapter
                     
-                #Populate the charge attack dropdown    
-                if self.c_dat['charges']:
+                    print('working on targets')
+                    #Stock the target list
+                    targets_adapter = targets_to_dict_adapter(self.c_dat['objects'],self.c_dat['targets'])
+                    targets_adapter.bind(on_selection_change = self.set_target)
+                    self.target_pane.adapter = targets_adapter
+                                
+                    print('working on map')        
+
+                        
+                    
+                    
+                    #Fill the map data
+                    for c in self.map_pane.children:
+                        i = c.id
+                        tile_data = self.c_dat['map'][int(i)]
+                        tiletext = [tile_data['type']]
+                        for key,value in tile_data.iteritems():
+                            if value == True:
+                                tiletext.append(key)
+                        tiletext = '\n'.join(tiletext)
+                        c.text = tiletext
+                        c.background_color = background_color = get_color_from_hex(tile_data['color'])
+
+
+                    #Add the current location
+                    self.current_location.text = self.c_dat['location']
+                    
+                    #Print some basic tile contents on the map page
+                    t = self.c_dat['targets']
+                    f = len(t['faction'])
+                    a = len(t['ally']) + len(t['friendly'])
+                    h = len(t['neutral']) + len(t['hostile']) + len(t['enemy'])
+                    self.tile_contents.text = ('Factionmates: %s, friendlies: %s, precious violence recipients: %s' % (f,a,h))
+                    
+                    print('working on dropdowns')
+                    #Populate the weapon dropdown
+                    if self.c_dat['weapons']:
+                        vals = []
+                        for w in self.c_dat['weapons']:
+                            vals.append(w[0])
+                        self.weapon_dropdown.values=vals
+                        
+                    #Populate the charge attack dropdown    
                     vals = ['None']
                     for w in self.c_dat['charges']:
                         vals.append(w[0])            
                     self.charge_dropdown.values=vals
-                
-                print('working on messages')
-                #Populate the message panel
-                self.message_pane.text = '\n '.join(self.c_dat['log'])
+                    
+                    print('working on messages')
+                    #Populate the message panel
+                    self.message_pane.text = self.c_dat['log']
 
-                print('working on actions')
-                #Put stuff in the action pane, if necessary. Not going to listify this, since it should be a very small performance toll
-                self.ids['action_pane'].clear_widgets()
-                #Put in the portals
-                for portal in self.c_dat['portals']:
-                    btn = FillButton(text=portal[0],on_press=partial(self.portal,portal))
-                    self.action_pane.add_widget(btn)
-            else:
-                self.ids['action_pane'].clear_widgets()
-                self.ids['action_pane'].add_widget(FillButton(text = 'Respawn',on_press=self.respawn))
+                    print('working on actions')
+                    #Put stuff in the action pane, if necessary. Not going to listify this, since it should be a very small performance toll
+                    self.ids['action_pane'].clear_widgets()
+                    #Put in the portals
+                    for portal in self.c_dat['portals']:
+                        btn = FillButton(text=portal[0],on_press=partial(self.portal,portal))
+                        self.action_pane.add_widget(btn)
+                else:
+                    self.ids['action_pane'].clear_widgets()
+                    self.ids['action_pane'].add_widget(FillButton(text = 'Respawn',on_press=self.respawn))
 
-        #If not connected to a character, make the character list on the functions page
-        elif self.c_dat['screen'] == 'char_page':
-            self.name.text = "Pick char @ func tab"
-            self.function_pane.clear_widgets()
-            self.function_pane.cols = 1
+            #If not connected to a character, make the character list on the functions page
+            elif self.c_dat['screen'] == 'char_page':
+                self.name.text = "Pick char @ func tab"
+                self.function_pane.clear_widgets()
+                self.function_pane.cols = 1
 
-            self.char_list = api.get_char_list()
-            for c in self.char_list:
-                btn = ClipButton(text = c[0])
-                btn.bind(on_press=partial(self.connect_character,c[9]))
-                box = BoxLayout()
-                dict = {1:(1,1,1,1),2:(0,1,0,1),3:(1,0,0,1),4:(.4,.5,.95,1)}
-                for key, val in dict.iteritems():
-                    label = ClipLabel(text=c[key],color=val)
-                    if key ==1:
-                        label.size_hint_x = .5
-                    else:
-                        label.size_hint_x = .5/3
-                    box.add_widget(label)
+                self.char_list = api.get_char_list()
+                for c in self.char_list:
+                    btn = ClipButton(text = c[0])
+                    btn.bind(on_press=partial(self.connect_character,c[9]))
+                    box = BoxLayout()
+                    dict = {1:(1,1,1,1),2:(0,1,0,1),3:(1,0,0,1),4:(.4,.5,.95,1)}
+                    for key, val in dict.iteritems():
+                        label = ClipLabel(text=c[key],color=val)
+                        if key ==1:
+                            label.size_hint_x = .5
+                        else:
+                            label.size_hint_x = .5/3
+                        box.add_widget(label)
+                    self.function_pane.add_widget(btn)
+                    self.function_pane.add_widget(box)
+            elif self.c_dat['screen'] == 'login':
+                self.name.test = "login @ func tab"
+                self.function_pane.clear_widgets()
+                self.function_pane.cols = 2
+                self.function_pane.add_widget(Label(text='username'))
+                self.un_input = TextInput(multiline=False)
+                self.function_pane.add_widget(self.un_input)
+                self.function_pane.add_widget(Label(text='password'))
+                self.pw_input = TextInput(multiline=False)
+                self.function_pane.add_widget(self.pw_input)
+                btn = Button(text='Login')
+                btn.bind(on_press=self.login)
                 self.function_pane.add_widget(btn)
-                self.function_pane.add_widget(box)
-        elif self.c_dat['screen'] == 'login':
-            self.name.test = "login @ func tab"
-            self.function_pane.clear_widgets()
-            self.function_pane.cols = 2
-            self.function_pane.add_widget(Label(text='username'))
-            self.un_input = TextInput(multiline=False)
-            self.function_pane.add_widget(self.un_input)
-            self.function_pane.add_widget(Label(text='password'))
-            self.pw_input = TextInput(multiline=False)
-            self.function_pane.add_widget(self.pw_input)
-            btn = Button(text='Login')
-            btn.bind(on_press=self.login)
-            self.function_pane.add_widget(btn)
-            
-        print('done refreshing gui')
+                
+            print('done refreshing gui')
+        
+    
+    
+
+    
+    def access_api(self,function):
+        self.refresh.color = (1,0,0,1)
+        try:
+            if not self.t.is_alive():
+                self.t = threading.Thread(target= function)
+                self.t.start()
+            else:
+                Clock.schedule_once(access_api(function),.1) #This queues up to one action. Not ideal.
+        except:
+            self.t = threading.Thread(target= function)
+            self.t.start()
+        self.need_ref = True
         
 ###Callbacks that must interface with the api
     def login(self, button):
         print('trying to log in')
         print(self.un_input.text)
-        api.login(self.un_input.text,self.pw_input.text)
+        self.access_api(partial(api.login,self.un_input.text,self.pw_input.text))
         self.refresh_quick()
         
+        
     def connect_character(self,cID,button):
-        api.char_con(cID)
-        self.update_gui()
+        self.access_api(partial(api.char_con,cID))
+        self.need_ref = True
+       
         
     def disconnect_character(self):
         print('attempting to disconnect')
-        api.char_dis()
-        self.update_gui()
+        self.access_api(partial(api.char_dis))
+        self.need_ref = True
+       
         
     def respawn(self,button):
-        api.respawn()
-        self.update_gui()
+        self.access_api(partial(api.respawn))
+        self.need_ref = True
+       
     
     def move(self,dir,button):
         print('moving begins')
-        api.move(dir)
+        self.access_api(partial(api.move,dir))
+
         print('moving ends, refreshing gui')
-        self.update_gui()
         
     def portal(self, pID, button):
-        api.portal(pID)
-        self.update_gui()
+        self.access_api(partial(api.portal,pID))
+        self.need_ref = True
     
     ###Combat stuff###
     def set_target(self,adapter):
@@ -504,10 +542,10 @@ class Holder(BoxLayout):
     def attack(self):
         if self.weapon and self.target:
             if self.charge:
-                api.attack(self.target,self.weapon,self.charge)
+                self.access_api(partial(api.attack,self.target,self.weapon,self.charge))
             else:
-                api.attack(self.target,self.weapon)
-        self.update_gui()
+                self.access_api(partial(api.attack,self.target,self.weapon))
+        self.need_ref = True
 
     #These are set via spinners. This requires checking against the dictionaries.
     def set_weapon(self,w):
@@ -521,25 +559,25 @@ class Holder(BoxLayout):
         reload_context = self.reload_context.text
         if reload_context == "Reload":
             if self.weapon:
-                api.reload(self.weapon)
+                self.access_api(partial(api.reload,self.weapon))
 
         if reload_context == "Rocks":
             iID = 'rock'
             print('trying to rocks')
-            api.pickup(iID)
+            self.access_api(partial(api.pickup,iID))
         if reload_context == "Weapon":
             iID = self.weapon
-            api.pickup(iID)
+            self.access_api(partial(api.pickup,iID))
         if reload_context == "All":    
             iID = 'all'
-            api.pickup(iID)
+            self.access_api(partial(api.pickup,iID))
         #Other contextually useful buttons?
-        
-        self.update_gui()        
+        self.need_ref = True
+               
         
     def reload_weapon(self,w,button):
-        api.use(w[1])
-        self.update_gui()
+        self.access_api(partial(api.use,w[1]))
+        self.need_ref = True
     
     #Item stuff
     def set_item(self,adapter):
@@ -553,39 +591,33 @@ class Holder(BoxLayout):
     
     def use(self):
         self.name.color = (1,0,0,1)
-        Clock.schedule_once(self.use_test, 1)
+        self.access_api(partial(api.use,self.item))
+        self.need_ref = True
         
-        
-        
-        
-    def use_test(self,clock):
-        self.c_dat = api.use(self.item)
-        self.name.color = (0,1,0,1)
-        self.update_gui()
         
     def item_context_go(self):
         item_context = self.item_context.text
         if item_context == "Give":
-            api.give(self.target,self.item)
+            self.access_api(partial(api.give,self.target,self.item))
 
         if item_context == "Drop":    
-            api.drop(self.item)
+            self.access_api(partial(api.drop,self.item))
 
         if item_context == "Safe":
-            api.safe_place(self.item)
+            self.access_api(partial(api.safe_place,self.item))
         
         if item_context == "Locker":
-            api.locker_place(self.item)
+            self.access_api(partial(api.locker_place,self.item))
         
         if item_context == "Reload":
-            api.reload(self.item)
+            self.access_api(partial(api.reload,self.item))
             
         if item_context == "Set Up":
-            api.placeitem(self.item)
-        
+            self.access_api(partial(api.placeitem,self.item))
+        self.need_ref = True
 
 
-        self.update_gui()
+       
         
     #Skills stuff
     def use_ability(self,adapter):
@@ -595,31 +627,31 @@ class Holder(BoxLayout):
                 if ability_data:
                     print(type)
                     if type == 'skills':
-                        api.useSkill(ability_data['id'])
+                        self.access_api(partial(api.useSkill,ability_data['id']))
                     elif type in ['cast','trigger']:
-                        api.castSpell(ability_data['id'])
-        self.update_gui()
+                        self.access_api(partial(api.castSpell,ability_data['id']))
+        self.need_ref = True
     
     #ACTIONS stuff
     def door(self,action):
-        api.door(action)
-        self.update_gui()
+        self.access_api(partial(api.door,action))
+        self.need_ref = True
     
     def search(self):
-        api.search()
-        self.update_gui()
+        self.access_api(partial(api.search,))
+        self.need_ref = True
     
     def hide(self):
         api.hide()
-        self.update_gui()
+        self.need_ref = True
     
     def say(self,text,mode=0):
         if mode:
-            api.say(text,self.target)
+            self.access_api(partial(api.say,text,self.target))
         else:
-            api.say(text)
+            self.access_api(partial(api.say,text))
         self.message_input.text = ''
-        self.update_gui()
+        self.need_ref = True
     
 #These are custom kivy classes    
 class Tabbable(TabbedPanel):
@@ -646,7 +678,11 @@ class InvListButton(ListItemButton):
     pass
 class InvListLabel(ListItemLabel):
     pass
+
+    
+    
 ###Build the app###
+
 class NexusApp(App):
     def on_pause(self):
         # Here you can save data if needed
@@ -658,7 +694,7 @@ class NexusApp(App):
       
     def build(self):
         return Holder()
-
+    
 ###Run The application###
 if __name__ == '__main__':
     NexusApp().run()

@@ -7,10 +7,20 @@ from lxml import html
 def page_load(postData={}, quick = False):
     print('page loading')
     if postData:
-        p = s.post(url,data=postData)
+        try:
+            p = s.post(url,data=postData)
+            c_dat['connection'] = True
+        except requests.ConnectionError as e:
+            c_dat['connection'] = False
+            return
         print(postData)
     else:
-         p=s.get(url)
+        try:
+            p=s.get(url)
+            c_dat['connection'] = True
+        except requests.ConnectionError as e:
+            c_dat['connection'] = False
+            return
     print('page loaded')
 
     #Now skip processing the page if we want to just spam something
@@ -104,8 +114,10 @@ def stat_ref(div):
     c_dat['status'] = div[0][0][2].text_content()
  
 def message_ref(div):
-    c_dat['log'] = div.text_content().split(' \r\n')[1:-1]
-
+    c_dat['log'] = div.text_content()
+    #c_dat['log'] = div.text_content().split(' \r\n')[1:-1]
+    
+    
 def error_ref(div):
     c_dat['error'] = div.text_content()
     print(c_dat['error'])
@@ -320,6 +332,8 @@ def ref_force():
     return c_dat
 
 def ref_both():
+
+    c_dat['screen']
     print(c_dat['screen'])
     if c_dat['screen'] == 'inventory':
         page_load({'sidebar':'Map'})

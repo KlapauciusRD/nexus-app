@@ -3,6 +3,7 @@
     #All the object propery IDs for SPEED
     
     #IDs for Stat bar
+    refresh:refresh
     name:name
     ap:ap
     hp:hp
@@ -55,6 +56,7 @@
         BoxLayout:
             Button:
                 id:refresh
+                color: (0,1,0,1)
                 size_hint_x:.1
                 text:'R'
                 font_size:self.height*.5
@@ -111,8 +113,9 @@
         TabbedPanel:
             tab_height:self.width/10
             tab_width:self.width/7
-            
+            default_tab_text: 'Func'
             pos_hint: {'center_x': .5, 'center_y': .5}
+            
             do_default_tab: False
             
             ########Inventory tab#######
@@ -335,6 +338,7 @@
                             
             ########Misc functions tab (logout and so on)########
             TabbedPanelItem:
+
                 text:'Func'
                 ScrollView
                     size: self.size
