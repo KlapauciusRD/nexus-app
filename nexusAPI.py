@@ -630,7 +630,8 @@ s.headers.update({'referer': my_referer})
 s = ses_load(s)
 
 #useful variables to keep track of because spaghetti code is the bestetti code, potentially avoiding page_loads
-c_dat = {'map':[],'inv':[],'inv_trim':[],'spells':{'trigger':[],'cast':[]}}  #dictionary containing all the stuff that needs to be passed every page load
+c_dat = {}  #dictionary containing all the stuff that needs to be passed every page load
+clean_data()
 a_dat = {}#Dict containing some account data, won't be passed every page load
 
 

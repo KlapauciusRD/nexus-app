@@ -245,6 +245,8 @@ class Holder(BoxLayout):
     log = ObjectProperty(None)
     status = ObjectProperty(None)
     
+    tabs = ObjectProperty(None)
+    
     #IDs for Inventory panel
     item_context = ObjectProperty(None)
     inv_cont = ObjectProperty(None)
@@ -281,14 +283,13 @@ class Holder(BoxLayout):
     
     def __init__(self, **kwargs):
         super(Holder, self).__init__(**kwargs)
-        #self.inv_cont.bind(minimum_height=self.inv_cont.setter('height'))
-        #self.target_pane.bind(minimum_height=self.target_pane.setter('height'))
-        
+   
         self.weapon = ''
         self.target = ''
         self.item = ''
         self.charge = ''
-        #Make the map, add the movement buttons. Should deal with 
+        
+        #Make the map, add the movement buttons. Should deal with jumping abilities eventually
         for i in range(25):
             btn = MapButton(text=(''),id=str(i))
             if i in [6,7,8]:
@@ -299,8 +300,11 @@ class Holder(BoxLayout):
                 btn.bind(on_press=partial(self.move,i-9))
             self.map_pane.add_widget(btn)
 
+        #Do an initial page load
         self.access_api(api.ref_force)
         self.need_ref = True
+        
+        #Set the GUI to update from the data every .1 seconds
         Clock.schedule_interval(self.update_gui, .1)
         
         
@@ -350,7 +354,38 @@ class Holder(BoxLayout):
                     self.log.text = self.c_dat['log'].split('- ')[1]
                 self.status.text = self.c_dat['status']
                 
+                #Print some basic tile contents on the map page
+                t = self.c_dat['targets']
+                f = len(t['faction'])
+                a = len(t['ally']) + len(t['friendly'])
+                h = len(t['neutral']) + len(t['hostile']) + len(t['enemy'])
+                self.tile_contents.text = ('Factionmates: %s, friendlies: %s, precious violence recipients: %s' % (f,a,h))
+
+                    
+                    
+                print('working on map') 
+                #Fill the map data
+                for c in self.map_pane.children:
+                    i = c.id
+                    tile_data = self.c_dat['map'][int(i)]
+                    tiletext = [tile_data['type']]
+                    for key,value in tile_data.iteritems():
+                        if value == True:
+                            tiletext.append(key)
+                    tiletext = '\n'.join(tiletext)
+                    c.text = tiletext
+                    c.background_color = background_color = get_color_from_hex(tile_data['color'])
                 
+                
+                print('working on messages')
+                #Populate the message panel
+                self.message_pane.text = self.c_dat['log']
+                
+                
+                
+                
+                
+                #This stuff only needs to happen if you're alive
                 if self.c_dat['hp'] != '0':
 
                     #Run the Inventory adapter
@@ -372,33 +407,10 @@ class Holder(BoxLayout):
                     targets_adapter.bind(on_selection_change = self.set_target)
                     self.target_pane.adapter = targets_adapter
                                 
-                    print('working on map')        
-
-                        
-                    
-                    
-                    #Fill the map data
-                    for c in self.map_pane.children:
-                        i = c.id
-                        tile_data = self.c_dat['map'][int(i)]
-                        tiletext = [tile_data['type']]
-                        for key,value in tile_data.iteritems():
-                            if value == True:
-                                tiletext.append(key)
-                        tiletext = '\n'.join(tiletext)
-                        c.text = tiletext
-                        c.background_color = background_color = get_color_from_hex(tile_data['color'])
-
 
                     #Add the current location
                     self.current_location.text = self.c_dat['location']
                     
-                    #Print some basic tile contents on the map page
-                    t = self.c_dat['targets']
-                    f = len(t['faction'])
-                    a = len(t['ally']) + len(t['friendly'])
-                    h = len(t['neutral']) + len(t['hostile']) + len(t['enemy'])
-                    self.tile_contents.text = ('Factionmates: %s, friendlies: %s, precious violence recipients: %s' % (f,a,h))
                     
                     print('working on dropdowns')
                     #Populate the weapon dropdown
@@ -414,9 +426,7 @@ class Holder(BoxLayout):
                         vals.append(w[0])            
                     self.charge_dropdown.values=vals
                     
-                    print('working on messages')
-                    #Populate the message panel
-                    self.message_pane.text = self.c_dat['log']
+
 
                     print('working on actions')
                     #Put stuff in the action pane, if necessary. Not going to listify this, since it should be a very small performance toll
@@ -426,11 +436,13 @@ class Holder(BoxLayout):
                         btn = FillButton(text=portal[0],on_press=partial(self.portal,portal))
                         self.action_pane.add_widget(btn)
                 else:
-                    self.ids['action_pane'].clear_widgets()
-                    self.ids['action_pane'].add_widget(FillButton(text = 'Respawn',on_press=self.respawn))
+                    self.ids.action_pane.clear_widgets()
+                    self.action_pane.add_widget(FillButton(text = 'Respawn',on_press=self.respawn))
+                    self.tabs.switch_to(self.ids.act_tab)
 
             #If not connected to a character, make the character list on the functions page
             elif self.c_dat['screen'] == 'char_page':
+                self.tabs.switch_to(self.ids.func_tab)
                 self.name.text = "Pick char @ func tab"
                 self.function_pane.clear_widgets()
                 self.function_pane.cols = 1
@@ -451,6 +463,7 @@ class Holder(BoxLayout):
                     self.function_pane.add_widget(btn)
                     self.function_pane.add_widget(box)
             elif self.c_dat['screen'] == 'login':
+                self.tabs.switch_to(self.ids.func_tab)
                 self.name.test = "login @ func tab"
                 self.function_pane.clear_widgets()
                 self.function_pane.cols = 2
@@ -590,7 +603,6 @@ class Holder(BoxLayout):
         
     
     def use(self):
-        self.name.color = (1,0,0,1)
         self.access_api(partial(api.use,self.item))
         self.need_ref = True
         

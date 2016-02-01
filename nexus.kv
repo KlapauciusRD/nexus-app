@@ -2,6 +2,7 @@
 
     #All the object propery IDs for SPEED
     
+    
     #IDs for Stat bar
     refresh:refresh
     name:name
@@ -12,6 +13,8 @@
     level:level
     log:log
     status:status
+    
+    tabs:tabs
     
     #IDs for Inventory panel
     item_context:item_context
@@ -47,7 +50,7 @@
     
     #Function panel
     function_pane:function_pane
-    
+
     orientation:'vertical'    
     #This is the statbar
     BoxLayout:
@@ -65,7 +68,8 @@
                 orientation:'vertical'
                 FillLabel:
                     id:name
-                    text:'not connected'            
+                    text:'not connected'    
+                    halign:'center'
                 BoxLayout:
                     FillLabel:
                         id:ap
@@ -111,6 +115,7 @@
     ###This contains the tabbed panels##
     BoxLayout:
         TabbedPanel:
+            id:tabs
             tab_height:self.width/10
             tab_width:self.width/7
             default_tab_text: 'Func'
@@ -182,6 +187,7 @@
             ########Action tab#######            
             TabbedPanelItem:
                 text:'Act.'
+                id:act_tab
                 BoxLayout:
                     orientation:'vertical'
                 
@@ -338,7 +344,7 @@
                             
             ########Misc functions tab (logout and so on)########
             TabbedPanelItem:
-
+                id:func_tab
                 text:'Func'
                 ScrollView
                     size: self.size

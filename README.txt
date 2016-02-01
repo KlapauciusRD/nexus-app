@@ -1,6 +1,26 @@
 A mobile interface for Nexus Clash, an online browser based MMO
 
-Running instructions for Windows 10 64 bit:
+To install on android: Download and install the latest apk file in the bin directory onto your device
+
+How to use:
+The func. tab contains the login and character connect info. If nothing seems to be popping up, go here.
+The weapon, target and item are all saved when selected. Any item, target or attacking actions will use these.
+The reload context menu reloads the selected weapon. Unlike the game system, a default target and weapon will never be selected.
+This precludes the possibility of accidentally attacking with the wrong weapon or the wrong target.
+Portals and door actions, such as opening, closing, entering and exiting are in the act tab. 
+Respawn is in the act tab.
+
+Notable unimplemented features:
+There are no pet interactions, either summoning or killing. 
+Alchemy and enchanting are not possible
+Some charge attacks do not work, particularly the ones I don't have to test.
+Skills with dropdowns do not work (i.e. portal cleaving)
+Portals cannot be bent
+
+
+
+###Instructions for install Python + Kivy for development###
+Instructions for Windows 10 64 bit:
 
 Git instructions:
 download git for windows at
@@ -28,16 +48,3 @@ c:/python27/python.exe -i main.py
 Install on ubuntu 64 bit:
 tbd
 
-How to use:
-The func. tab contains the login and character connect info. If nothing seems to be popping up, go there.
-The weapon, target and item are all saved when selected. Any item, target or attacking actions will use these.
-The reload context menu reloads the selected weapon. Unlike the game system, a default target and weapon will never be selected.
-This precludes the possibility of accidentally attacking with the wrong weapon or the wrong target.
-Portals and door actions are in the act tab
-
-Notable unimplemented features:
-There are no pet interactions, either summoning or killing
-Alchemy and enchanting are not possible
-Some charge attacks do not work
-Skills with dropdowns do not work (i.e. portal cleaving)
-Portals cannot be bent
