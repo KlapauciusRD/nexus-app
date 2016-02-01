@@ -1,6 +1,6 @@
 from kivy.config import Config
-Config.set('graphics', 'width', '250')
-Config.set('graphics', 'height', '450')
+Config.set('graphics', 'width', '500')
+Config.set('graphics', 'height', '900')
 
 from kivy.app import App
 from kivy.lang import Builder
@@ -18,6 +18,8 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.listview import (ListView, ListItemButton, ListItemLabel,
                                CompositeListItem)
 from kivy.adapters.dictadapter import DictAdapter
+
+from kivy.clock import Clock, _default_time as time
 
 from kivy.utils import get_color_from_hex
 
@@ -48,6 +50,7 @@ def find_in_in(string,listss):
                 if string == list[0]:
                     return list,type
                     
+#Stupid function that mimics find_in_in but due to lack of consistency in data structures is necessary
 def find_in_in_stupid(string,listss):
     print('string')
     for type, lists in listss.iteritems():
@@ -90,7 +93,7 @@ def inv_to_dict_adapter(inv):
     inv_args_converter = lambda row_index, item: \
         {'text': item['text'],
          'size_hint_y': None,
-         'height': 25,
+         'height': 35,
          'cls_dicts': [{'cls': InvListButton,
                         'kwargs': {'text': item['text'],'size_hint_x':.8}},
                        {'cls': InvListLabel,
@@ -159,7 +162,7 @@ def targets_to_dict_adapter(objects,target_lists):
     target_args_converter = lambda row_index, target: \
         {'text': target['text'],
          'size_hint_y': None,
-         'height': 25,
+         'height': 35,
          'cls_dicts': [{'cls': InvListButton,
                         'kwargs': {'text': target['text'],'size_hint_x':.7}},
                        {'cls': InvListLabel,
@@ -204,7 +207,7 @@ def abilities_to_dict_adapter(ability_lists):
     ability_args_converter = lambda row_index, ability: \
         {'text': ability['text'],
          'size_hint_y': None,
-         'height': 40,
+         'height': 45,
          'cls_dicts': [{'cls': InvListButton,
                         'kwargs': {'text': ability['text'],'size_hint_x':.85}},
                        {'cls': InvListLabel,
@@ -281,12 +284,12 @@ class Holder(BoxLayout):
 
         for i in range(25):
             btn = MapButton(text=(''),id=str(i))
-            if i in [7,8,9]:
-                btn.bind(on_press=partial(self.move,i-6))
-            if i in [12,14]:
-                btn.bind(on_press=partial(self.move,i-8))
-            if i in [17,18,19]:
-                btn.bind(on_press=partial(self.move,i-10))
+            if i in [6,7,8]:
+                btn.bind(on_press=partial(self.move,i-5))
+            if i in [11,13]:
+                btn.bind(on_press=partial(self.move,i-7))
+            if i in [16,17,18]:
+                btn.bind(on_press=partial(self.move,i-9))
             self.map_pane.add_widget(btn)
         api.page_load()
         self.refresh_quick()
@@ -364,7 +367,7 @@ class Holder(BoxLayout):
                     for key,value in tile_data.iteritems():
                         if value == True:
                             tiletext.append(key)
-                    tiletext = ','.join(tiletext)
+                    tiletext = '\n'.join(tiletext)
                     c.text = tiletext
                     c.background_color = background_color = get_color_from_hex(tile_data['color'])
 
@@ -549,7 +552,15 @@ class Holder(BoxLayout):
         
     
     def use(self):
+        self.name.color = (1,0,0,1)
+        Clock.schedule_once(self.use_test, 1)
+        
+        
+        
+        
+    def use_test(self,clock):
         self.c_dat = api.use(self.item)
+        self.name.color = (0,1,0,1)
         self.update_gui()
         
     def item_context_go(self):
@@ -587,6 +598,7 @@ class Holder(BoxLayout):
                         api.useSkill(ability_data['id'])
                     elif type in ['cast','trigger']:
                         api.castSpell(ability_data['id'])
+        self.update_gui()
     
     #ACTIONS stuff
     def door(self,action):

@@ -172,7 +172,12 @@ def combat_ref(f):
         for charge in charges:
             c_dat['charges'].append([charge.attrib['value'],charge.text_content()])
             
-	return
+    return
+    
+def flag_ref(f):
+    pass
+    
+    
     
 def pickup_ref(f):
     for item in f[1]:
@@ -371,6 +376,8 @@ def ref_all(tree):
                     spell_ref(f)
                 elif f.attrib['action'] == 'modules.php?name=Game&op=attack':
                     combat_ref(f)
+                elif f.attrib['action'] == 'modules.php?name=Game&op=flag':
+                    flag_ref(f)
                 elif f.attrib['name'] == 'portal':
                     portal_ref(f)
                 elif f.attrib['name'] == 'pickup':
