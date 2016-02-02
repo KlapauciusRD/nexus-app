@@ -471,7 +471,7 @@ class Holder(BoxLayout):
                 self.un_input = TextInput(multiline=False)
                 self.function_pane.add_widget(self.un_input)
                 self.function_pane.add_widget(Label(text='password'))
-                self.pw_input = TextInput(multiline=False)
+                self.pw_input = TextInput(multiline=False,password=True)
                 self.function_pane.add_widget(self.pw_input)
                 btn = Button(text='Login')
                 btn.bind(on_press=self.login)

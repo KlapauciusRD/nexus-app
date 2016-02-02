@@ -1,6 +1,10 @@
 A mobile interface for Nexus Clash, an online browser based MMO
 
-To install on android: Download and install the latest apk file in the bin directory onto your device
+To install on android: Download and install the latest apk file in the bin directory onto your device. 
+If you haven't already, you must 'enable installation of files from untrusted sources' in your android options -> security settings
+We've had some issues with screen dimmers during installation, so if you can't click the install button just panic
+
+
 
 How to use:
 The func. tab contains the login and character connect info. If nothing seems to be popping up, go here.

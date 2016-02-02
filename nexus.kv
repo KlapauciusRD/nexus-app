@@ -100,7 +100,7 @@
         Label:
             valign:'top'
             size_hint_y:.2
-            font_size:10
+            font_size:self.height*.7
             text_size: self.width, None
             id:status
             text:'list some effects?'
@@ -108,7 +108,7 @@
             valign:'top'
             id:log
             text_size: self.width, self.height
-            font_size:10
+            font_size:self.height*.35
             size_hint_y:.4
             text:'last message \nshould wrap'
         
@@ -362,7 +362,7 @@
         size_hint_y:.05
         Label:
             id:target_label
-            font_size:11
+            font_size:self.height*.8
             text_size: self.size
             halign: 'left'
             shorten:True
@@ -370,7 +370,7 @@
             text:'t:-'
         Label:
             id:item_label
-            font_size:11
+            font_size:self.height*.8
             text_size: self.size
             shorten:True
             shorten_from:'right'
@@ -378,7 +378,7 @@
             text:'i:-'
         Label:
             id:weapon_label
-            font_size:11
+            font_size:self.height*.8
             text_size: self.size
             shorten:True
             shorten_from:'right'
@@ -407,7 +407,7 @@
     valign:'middle'
 
 <ClipButton@Button>:
-    font_size:13
+    font_size:self.height*.4
     text_size: self.size
     shorten:True
     shorten_from:'right'
@@ -425,7 +425,7 @@
 <MessageLabel@Label>
     size_hint_y: None
     text_size: self.width, None
-    font_size:12
+    font_size:14
     height: self.texture_size[1]
     
 <SpinnerOption>:
@@ -453,13 +453,13 @@
     row_force_default: True
     
 <InvListButton@ListItemButton>:
-    font_size:13
+    font_size:self.height*.65
     text_size: self.size
     shorten:True
     shorten_from:'right'
     valign:'middle'
 <InvListLabel@ListItemLabel>:
-    font_size:13
+    font_size:self.height*.65
     text_size: self.size
     shorten:True
     shorten_from:'right'
