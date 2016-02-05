@@ -299,6 +299,8 @@ class Holder(BoxLayout):
             if i in [16,17,18]:
                 btn.bind(on_press=partial(self.move,i-9))
             self.map_pane.add_widget(btn)
+            if i == 12:
+                btn.bind(on_press=partial(self.door,'alternate'))
 
         #Do an initial page load
         self.access_api(api.ref_force)
@@ -645,9 +647,12 @@ class Holder(BoxLayout):
         self.need_ref = True
     
     #ACTIONS stuff
-    def door(self,action):
+    def door(self,action,button = 0):
+        print action
         self.access_api(partial(api.door,action))
         self.need_ref = True
+        
+        
     
     def search(self):
         self.access_api(partial(api.search,))

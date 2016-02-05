@@ -146,7 +146,7 @@ def skill_ref(f):
     skill_text = f[0].attrib['value']
     skill_mp = ''
     c_dat['abilities']['skills'].append({'text':skill_text,'id':skill_text,'mp':skill_mp})
-    
+
     
 def portal_ref(f):
     portal_stats = f.xpath('input')
@@ -155,7 +155,7 @@ def portal_ref(f):
         portal_name = portal_stats[2].attrib['value']
         c_dat['portals'].append([portal_name,portal_id])
     if len(portal_stats) == 2: # This is the ferries
-        ferries = portal.xpath('.//option')
+        ferries = f.xpath('.//option')
         for dest in ferries:
             c_dat['portals'].append([dest.text, dest.attrib['value']])
 
@@ -281,14 +281,16 @@ def inv_ref(sidebar):
 def map_ref(sidebar):
     map_raw = sidebar.xpath('.//div[@id="Map"]')[0][0]
     map_contents = []
+    c_dat['inside'] = False
     for row in map_raw:
         for tile in row:
             #Get all the pertinent info from the tile. The contents stuff needs a lot of work.
             tile_color = tile.attrib['bgcolor']
             tile_type = tile.attrib['title'].split(', ')[-1].split(' ',1)[-1]
             
-            
-            
+            if tile_type == 'unknown':
+                c_dat['inside'] = True
+
             #Look in all the td elements with the background attribute
             tile_contents = tile.xpath('.//*[@background]')
             #Assume all this stuff is false
@@ -315,7 +317,9 @@ def map_ref(sidebar):
 
             map_contents.append({'color':tile_color, 'type':tile_type,'sh':tile_sh,'lights':tile_lights,'pc':tile_pc,'pets':tile_pets,'portal':tile_portal})
     c_dat['map'] = map_contents
+    
     a_dat['test'] = map_raw
+    
 
 def clean_data():
     for key in ['portals','pickup','weapons','charges','error']:
@@ -448,8 +452,10 @@ def respawn():
 #Map interactions
 def move(direction, leap = 0):
     postData={'op':'move','direction':direction,'sidebar':'Map'}
-    if "Deactivate Cloak of Air" in c_dat['abilities']['skills']:
-        postData['Gust'] = 'Gust'
+    for s in c_dat['abilities']['skills']:
+        if s['text'] == "Deactivate Cloak of Air":
+            postData['Gust'] = 'Gust'
+        print('gusting?')
         
     p = page_load(postData)
     #or if you are a HC with air p = s.post(url, data={'op':'move','direction':direction,'Gust':'Gust'})
@@ -464,27 +470,29 @@ def door(action):
     canseep = any(l=='Deactivate Cloak of Air' for l in c_dat['abilities']['skills'])
     print('called door')
     print(action)
-    
+    print(c_dat['inside'])
+    if action=='alternate':
+        if c_dat['inside']:
+            action = 'out'
+        else:
+            action = 'in'
     if action=='in':
         postData['action']='enter'
         if canseep:
             postData['action']='seepin'
-
-    if action=='out':
+    elif action=='out':
         postData['action']='exit'
         if canseep:
             postData['action']='seepout'
-    if action == 'open':
+    elif action == 'open':
         postData['action']='open'
-    if action == 'close':
+    elif action == 'close':
         postData['action']='close'
-
-    
-    if action=='pick':
+    elif action=='pick':
         postData['action']='pick'
-    if action=='lock':
+    elif action=='lock':
         postData['action']='lock'
-    if action=='unlock':
+    elif action=='unlock':
         postData['action']='unlock'    
 
     p = page_load(postData)

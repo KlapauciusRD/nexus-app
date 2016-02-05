@@ -203,7 +203,12 @@
                                 cols: 2
                                 row_default_height: root.height/15
                                 row_force_default: True
-                                
+                                Button:
+                                    text:'search'
+                                    on_press:root.search()
+                                Button:
+                                    text:'hide'
+                                    on_press:root.hide()
                                 Button:
                                     text:'enter'
                                     on_press:root.door('in')
@@ -216,12 +221,7 @@
                                 Button:
                                     text:'close'
                                     on_press:root.door('close')
-                                Button:
-                                    text:'search'
-                                    on_press:root.search()
-                                Button:
-                                    text:'hide'
-                                    on_press:root.hide()
+
                                 Button:
                                     text:'lock'
                                     on_press:root.door('lock')
