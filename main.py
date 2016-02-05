@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
 from kivy.config import Config
 Config.set('graphics', 'width', '500')
 Config.set('graphics', 'height', '900')
@@ -24,6 +25,9 @@ from kivy.adapters.dictadapter import DictAdapter
 
 from kivy.core.text.markup import MarkupLabel
 
+from kivy.garden.recycleview import RecycleView
+from kivy.properties import ListProperty
+
 
 from kivy.clock import Clock, _default_time as time
 
@@ -31,12 +35,14 @@ from kivy.utils import get_color_from_hex
 
 from functools import partial
 import threading
+import unicodedata
 
 from kivy.uix.tabbedpanel import TabbedPanel
 from kivy.uix.floatlayout import FloatLayout
 #Window.clearcolor = (.8, .8, .8, 1)
 
 import nexusAPI as api
+import irc
 
 __version__ = "0.0.4"
 
@@ -307,7 +313,12 @@ class Holder(BoxLayout):
         #Set the GUI to update from the data every .1 seconds
         Clock.schedule_interval(self.update_gui, .1)
         
-        
+        self.irc_log = [{'viewclass':'ContactItem',
+                        'index':0,"height":30,
+                        "message_time":'Time',
+                        'message_text':'Message'}
+                        ]
+        # self.ids.irc_pane.data  = self.irc_log
 
     
 
@@ -664,6 +675,38 @@ class Holder(BoxLayout):
             self.access_api(partial(api.say,text))
         self.message_input.text = ''
         self.need_ref = True
+    
+    def irc_connect(self):
+        self.irc_nickname = self.ids.irc_nickname_input.text.encode('utf-8')
+        self.irc_channel = self.ids.irc_channel_input.text.encode('utf-8')
+        Clock.schedule_interval(self.irc_update, .5)
+        irc.initialise(self.irc_nickname,self.irc_channel)
+        self.ids.irc_connect.clear_widgets()
+        self.ids.irc_connect.parent.remove_widget(self.ids.irc_connect)
+        
+    def irc_update(self,clock):
+        try:
+            new_messages = irc.p.get_message_log()
+        except:
+            new_messages = []
+        if new_messages:
+            for m in new_messages:
+                print(m)
+                message_dict = {'viewclass':'ContactItem'}
+                message_dict['message_time'] = m[0]
+                message_dict['message_text'] = m[1]
+                message_dict['index'] = self.irc_log[-1]['index']+1
+                self.irc_log.append(message_dict)
+            self.ids.irc_pane.data  = self.irc_log
+        self.ids.irc_pane.scroll_y = 0
+        
+        
+    def irc_say(self):
+
+        msg = self.ids.irc_input.text
+        irc.p.send_message(msg)
+        
+    
     
 #These are custom kivy classes    
 class Tabbable(TabbedPanel):
