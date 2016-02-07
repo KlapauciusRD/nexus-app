@@ -681,8 +681,8 @@ class Holder(BoxLayout):
         self.irc_channel = self.ids.irc_channel_input.text.encode('utf-8')
         Clock.schedule_interval(self.irc_update, .5)
         irc.initialise(self.irc_nickname,self.irc_channel)
-        self.ids.irc_connect.clear_widgets()
-        self.ids.irc_connect.parent.remove_widget(self.ids.irc_connect)
+        #self.ids.irc_connect.clear_widgets()
+        #self.ids.irc_connect.parent.remove_widget(self.ids.irc_connect)
         
     def irc_update(self,clock):
         try:
