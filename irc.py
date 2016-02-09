@@ -5,6 +5,7 @@
 from twisted.words.protocols import irc
 from twisted.internet import reactor, protocol
 from twisted.python import log
+from twisted.internet import defer
 
 # system imports
 import time, sys
@@ -53,16 +54,33 @@ class KlapBot(irc.IRCClient):
             """Write a message to the file."""
             timestamp = time.strftime("[%H:%M:%S]", time.localtime(time.time()))
             message_queue.append([timestamp, message])
+            print(message)
             
         
-    def get_message_log(self):
+
+        
+        
+        
+    ##This is code that should get a list of users sorcery
+    def names(self, channel):
+        "List the users in 'channel', usage: client.who('#testroom')"
+        self.sendLine('NAMES %s' % channel)
+
+    def irc_RPL_NAMREPLY(self, *nargs):
+        "Receive NAMES reply from server"
+        print 'NAMES:', nargs
         with lock:
-            global message_queue
-            return_queue = message_queue
-            message_queue = []
-            return return_queue
-        
-        
+            self.name_list = nargs[1][3]
+
+    def irc_RPL_ENDOFNAMES(self, *nargs):
+        "Called when NAMES output is complete"
+        print 'NAMES COMPLETE'
+
+    def irc_unknown(self, prefix, command, params):
+        "Print all unhandled replies, for debugging."
+        print 'UNKNOWN:', prefix, command, params    
+    ###end user listing code sorcery
+    
     
     def connectionMade(self):  
         irc.IRCClient.connectionMade(self)
@@ -129,6 +147,19 @@ class KlapBot(irc.IRCClient):
         return nickname + '^'
 
 
+    #Stuff that really shouldn't be here!
+    def get_message_log(self):
+        with lock:
+            global message_queue
+            return_queue = message_queue
+            message_queue = []
+            return return_queue
+    
+    def get_names(self):
+        with lock:
+            return self.name_list
+        
+        
 
 class KlapBotFactory(protocol.ClientFactory):
     """A factory for KlapBots.
@@ -155,7 +186,7 @@ class KlapBotFactory(protocol.ClientFactory):
         print "connection failed:", reason
         reactor.stop()
 
-
+    
         
 def initialise(nick, channel):
     global lock
@@ -179,3 +210,9 @@ def start_irc(nick, channel):
 
     # run bot
     reactor.run()
+
+    
+    
+
+
+

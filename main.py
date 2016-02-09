@@ -687,8 +687,10 @@ class Holder(BoxLayout):
     def irc_update(self,clock):
         try:
             new_messages = irc.p.get_message_log()
+            name_list = irc.p.get_names()
         except:
             new_messages = []
+            name_list = []
         if new_messages:
             for m in new_messages:
                 print(m)
@@ -700,12 +702,19 @@ class Holder(BoxLayout):
             self.ids.irc_pane.data  = self.irc_log
         self.ids.irc_pane.scroll_y = 0
         
+        if name_list:
+            print name_list.split(' ')
+            self.ids.irc_names.item_strings = name_list.split(' ')
+            
+            
+        #self.ids.irc_names.scroll_y = 1
         
     def irc_say(self):
 
         msg = self.ids.irc_input.text
         irc.p.send_message(msg)
-        
+        self.ids.irc_input.text = ''
+    
     
     
 #These are custom kivy classes    
