@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
 from kivy.config import Config
 Config.set('graphics', 'width', '500')
 Config.set('graphics', 'height', '900')
@@ -24,6 +25,9 @@ from kivy.adapters.dictadapter import DictAdapter
 
 from kivy.core.text.markup import MarkupLabel
 
+from kivy.garden.recycleview import RecycleView
+from kivy.properties import ListProperty
+
 
 from kivy.clock import Clock, _default_time as time
 
@@ -31,12 +35,17 @@ from kivy.utils import get_color_from_hex
 
 from functools import partial
 import threading
+import unicodedata
 
 from kivy.uix.tabbedpanel import TabbedPanel
 from kivy.uix.floatlayout import FloatLayout
 #Window.clearcolor = (.8, .8, .8, 1)
 
+from kivy.core.window import Window
+Window.softinput_mode = 'pan'
+
 import nexusAPI as api
+import irc
 
 __version__ = "0.0.4"
 
@@ -309,7 +318,12 @@ class Holder(BoxLayout):
         #Set the GUI to update from the data every .1 seconds
         Clock.schedule_interval(self.update_gui, .1)
         
-        
+        self.irc_log = [{'viewclass':'ContactItem',
+                        'index':0,"height":30,
+                        "message_time":'Time',
+                        'message_text':'Message'}
+                        ]
+        # self.ids.irc_pane.data  = self.irc_log
 
     
 
@@ -437,11 +451,30 @@ class Holder(BoxLayout):
                     for portal in self.c_dat['portals']:
                         btn = FillButton(text=portal[0],on_press=partial(self.portal,portal))
                         self.action_pane.add_widget(btn)
+                    for flag_recap in self.c_dat['flag_recap']:
+                        btn = FillButton(text=flag_recap[1],on_press=partial(self.flag_recap,flag_recap[0]))
+                        self.action_pane.add_widget(btn)
+                    for flag_grab in self.c_dat['flag_grab']:
+                        btn = FillButton(text=flag_grab[1],on_press=partial(self.flag_grab,flag_grab[0]))
+                        self.action_pane.add_widget(btn)
+                        
                 else:
                     self.ids.action_pane.clear_widgets()
                     self.action_pane.add_widget(FillButton(text = 'Respawn',on_press=self.respawn))
                     self.tabs.switch_to(self.ids.act_tab)
 
+                    
+                    
+                #Change the colour of tabs with interesting things in them
+                if self.c_dat['targets']['enemy'] or self.c_dat['targets']['hostile'] or self.c_dat['targets']['neutral']:
+                    self.ids.irc_tab.background_color = (1,0,0,1)
+                else:
+                    self.ids.irc_tab.background_color = (1,1,1,1)
+                    
+                    
+                
+                    
+                    
             #If not connected to a character, make the character list on the functions page
             elif self.c_dat['screen'] == 'char_page':
                 self.tabs.switch_to(self.ids.func_tab)
@@ -669,6 +702,68 @@ class Holder(BoxLayout):
             self.access_api(partial(api.say,text))
         self.message_input.text = ''
         self.need_ref = True
+    
+    
+    def flag_recap(self,id):
+        self.access_api(partial(api.flag_recap,id))
+        self.need_ref = True
+        
+    def flag_cap(self):
+        pass
+    
+    
+    def irc_connect(self):
+        self.irc_nickname = self.ids.irc_nickname_input.text.encode('utf-8')
+        self.irc_channel = self.ids.irc_channel_input.text.encode('utf-8')
+        irc.initialise(self.irc_nickname,self.irc_channel)
+        Clock.schedule_interval(self.irc_update_names, 20)
+        Clock.schedule_interval(self.irc_update, 1)
+        #self.ids.irc_connect.clear_widgets()
+        #self.ids.irc_connect.parent.remove_widget(self.ids.irc_connect)
+        #self.ids.irc_connect.hide
+        
+        
+        
+        
+        
+    def irc_update(self,clock):
+        try:
+            new_messages = irc.p.get_message_log()
+            name_list = irc.p.get_names()
+        except:
+            new_messages = []
+            name_list = []
+        if new_messages:
+            for m in new_messages:
+                print(m)
+                message_dict = {'viewclass':'ContactItem'}
+                message_dict['message_time'] = m[0][1:-1]
+                message_dict['message_text'] = m[1]
+                message_dict['index'] = self.irc_log[-1]['index']+1
+                self.irc_log.append(message_dict)
+            self.ids.irc_pane_messages.data  = self.irc_log
+            if not self.ids.tabs.current_tab.text == 'IRC':
+                self.ids.irc_tab.background_color = (1,0,0,1)
+        self.ids.irc_pane_messages.scroll_y = 0
+        
+        if name_list:
+            print name_list.split(' ')
+            self.ids.irc_pane_names.item_strings = name_list.split(' ')
+            
+    def irc_update_names(self,clock):
+        try:
+            irc.p.names()
+        except:
+            pass
+
+        
+    def irc_say(self):
+
+        msg = self.ids.irc_input.text.encode('utf-8')
+        irc.p.send_message(msg)
+        self.ids.irc_input.text = ''
+    
+    
     
 #These are custom kivy classes    
 class Tabbable(TabbedPanel):

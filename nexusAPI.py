@@ -187,8 +187,21 @@ def combat_ref(f):
     return
     
 def flag_ref(f):
-    pass
+    global test
+    test = f
+    if f.attrib['name'] == 'flag_retrieval':
+        flags_raw = f[2]
+        flag_recap = []
+        for flag in flags_raw:
+            id = flag.attrib['value']
+            name = flag.text_content().split(' - ')[0]
+            flag_recap.append([id,name])
+        flag_recap = flag_recap[1:]
+
+    c_dat['flag_recap'] = flag_recap
     
+    if f.attrib['name'] == 'flag_capture':
+        pass
     
     
 def pickup_ref(f):
@@ -322,7 +335,7 @@ def map_ref(sidebar):
     
 
 def clean_data():
-    for key in ['portals','pickup','weapons','charges','error']:
+    for key in ['portals','pickup','weapons','charges','error','flag_recap','flag_grab']:
         c_dat[key] = []
 
     c_dat['abilities'] = {'cast':[],'trigger':[],'skills':[]}
@@ -625,6 +638,13 @@ def say(text,target=0):
         postData['target_id'] = target
     page_load(postData)
     
+    
+#faction interactions
+def flag_recap(id):
+    postData = {'op':'flag_retrieval', 'standard_id':id}
+    
+def flag_cap(id):
+    pass
 
 ####On start
             
@@ -638,8 +658,9 @@ s.headers.update({'referer': my_referer})
 s = ses_load(s)
 
 #useful variables to keep track of because spaghetti code is the bestetti code, potentially avoiding page_loads
-c_dat = {}  #dictionary containing all the stuff that needs to be passed every page load
+c_dat = {'inv':[],'map':[]}  #dictionary containing all the stuff that needs to be passed every page load
 clean_data()
+c_dat['connection'] = True
 a_dat = {}#Dict containing some account data, won't be passed every page load
 
 
