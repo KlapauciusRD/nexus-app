@@ -5,7 +5,6 @@
 from twisted.words.protocols import irc
 from twisted.internet import reactor, protocol
 from twisted.python import log
-from twisted.internet import defer
 
 # system imports
 import time, sys
@@ -45,7 +44,7 @@ class KlapBot(irc.IRCClient):
   
     #My commands.
     def send_message(self, message):
-        message = unicodedata.normalize('NFKD', message).encode('ascii','ignore')
+        #message = unicodedata.normalize('NFKD', message).encode('ascii','ignore')
         self.msg(self.factory.channel, message)
         self.log_message('<'+self.factory.nickname+'> '+message)
     
@@ -62,7 +61,9 @@ class KlapBot(irc.IRCClient):
         
         
     ##This is code that should get a list of users sorcery
-    def names(self, channel):
+    def names(self, channel=None):
+        if not channel:
+            channel = self.factory.channel
         "List the users in 'channel', usage: client.who('#testroom')"
         self.sendLine('NAMES %s' % channel)
 

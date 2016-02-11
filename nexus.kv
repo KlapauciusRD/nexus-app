@@ -245,6 +245,7 @@
             ########Targetting tab#######    
             TabbedPanelItem:
                 text:'Target'
+                id:target_tab
                 BoxLayout:
                     orientation:'vertical'
                     #Attacking buttons
@@ -350,21 +351,24 @@
             TabbedPanelItem:
                 id:func_tab
                 text:'Func'
-                Spinner:
-                    text:'Additional Functions'
-                    id:function_context
-                    values:["IRC","Safe (NA)","Locker (NA)","Pets (NA)","Crafting (NA),Log Out (NA)"]
-                    on_text:self.add_tab()
-                ScrollView
-                    size: self.size
-                #Label:
-                #    text:'lets start with something, and end with nothing'
-                    GridLayout:
-                        id:function_pane
-                        size_hint_y: None
-                        height: self.minimum_height
-                        cols: 1
-                        row_default_height: root.height/13
+                BoxLayout:
+                    orientation:'vertical'
+                    Spinner:
+                        text:'Additional Functions'
+                        id:function_context
+                        values:["IRC","Safe (NA)","Locker (NA)","Pets (NA)","Crafting (NA),Log Out (NA)"]
+                        on_text:root.add_tab()
+                        size_hint_y:.2
+                    ScrollView
+                        size: self.size
+                    #Label:
+                    #    text:'lets start with something, and end with nothing'
+                        GridLayout:
+                            id:function_pane
+                            size_hint_y: None
+                            height: self.minimum_height
+                            cols: 1
+                            row_default_height: root.height/13
                       
 
 
@@ -372,9 +376,10 @@
             ###IRC TAB###
             TabbedPanelItem:
                 text:'IRC'
+                id:irc_tab
+                on_press:self.background_color = (1,1,1,1)
                 BoxLayout:
                     orientation:'vertical'
-                    id:irc_tab
                     GridLayout:
                         cols:2
                         id: irc_connect
@@ -394,18 +399,22 @@
                             size_hint_x:.2
                             text:'Connect'
                             on_press:root.irc_connect()
+                        Button:
+                            size_hint_x:.2
+                            text:'Disconnect'
+                            on_press:root.irc_disconnect()
                     BoxLayout:
                         RecycleView:
-                            size_hint_x:.7
+                            size_hint_x:.8
                             size:self.size
-                            id:irc_pane
+                            id:irc_pane_messages
                             key_viewclass: 'viewclass'
                             key_size: 'height'
                             #layout_manager: LinearRecycleLayoutManager(orientation="vertical", default_size=self.height)
 
                         ListView:
-                            size_hint_x:.3
-                            id:irc_names
+                            size_hint_x:.2
+                            id:irc_pane_names
                             size:self.size
                             
                     BoxLayout:
@@ -539,14 +548,17 @@
             size: self.size
     Label:
         size_hint_x:.2
-        font_size: "20sp"
+        font_size: 14
         text: root.message_time
         color: (0, 0, 0, 1)
         text_size: (self.width, None)
     Label:
         size_hint_x:.8
-        font_size: "20sp"
+        font_size: 14
         text: root.message_text
         color: (0, 0, 0, 1)
         text_size: (self.width, None)
+        halign:'left'
+        shorten:True
+        shorten_from:'right'
     
