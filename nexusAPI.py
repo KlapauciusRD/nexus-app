@@ -189,19 +189,21 @@ def combat_ref(f):
 def flag_ref(f):
     global test
     test = f
+    print('test')
+    flag_recap = []
     if f.attrib['name'] == 'flag_retrieval':
         flags_raw = f[2]
-        flag_recap = []
+        
         for flag in flags_raw:
             id = flag.attrib['value']
             name = flag.text_content().split(' - ')[0]
             flag_recap.append([id,name])
         flag_recap = flag_recap[1:]
-
     c_dat['flag_recap'] = flag_recap
     
     if f.attrib['name'] == 'flag_capture':
-        pass
+        c_dat['flag_capture'] = True
+            
     
     
 def pickup_ref(f):
@@ -217,7 +219,9 @@ def target_ref(characters, levels, stats):
     # Remove faction link if we are on a SH tile:
     if characters:    
         if characters[0].attrib['href'][:32] == 'modules.php?name=Game&op=faction':
+            c_dat['faction_tile'] = characters[0].text_content()
             characters = characters[1:]
+        
 
         #Go through all the characters. Currently completely ignores pets, despite them being passed in the characters variable.
         for i in range(len(levels)):
@@ -245,6 +249,8 @@ def target_ref(characters, levels, stats):
             elif mp_test == '4':
                 mp = 'Out'
             c_dat['targets'][relationship].append([name,cID,level,hp,mp])
+            
+        
     
     #Check if it's a pet or a person.
     #Person case:
@@ -335,7 +341,7 @@ def map_ref(sidebar):
     
 
 def clean_data():
-    for key in ['portals','pickup','weapons','charges','error','flag_recap','flag_grab']:
+    for key in ['portals','pickup','weapons','charges','error','flag_recap','flag_capture','faction_tile']:
         c_dat[key] = []
 
     c_dat['abilities'] = {'cast':[],'trigger':[],'skills':[]}
@@ -641,11 +647,13 @@ def say(text,target=0):
     
 #faction interactions
 def flag_recap(id):
-    postData = {'op':'flag_retrieval', 'standard_id':id}
+    postData = {'op':'flag','action':'retrieve', 'standard_id':id}
+    page_load(postData)
     
-def flag_cap(id):
-    pass
-
+def flag_cap():
+    postData = {'op':'flag','action':'capture'}
+    page_load(postData)
+    
 ####On start
             
 ###Session Setup###
@@ -658,7 +666,7 @@ s.headers.update({'referer': my_referer})
 s = ses_load(s)
 
 #useful variables to keep track of because spaghetti code is the bestetti code, potentially avoiding page_loads
-c_dat = {'inv':[],'map':[]}  #dictionary containing all the stuff that needs to be passed every page load
+c_dat = {'inv':[],'map':[],'inv_trim':[]}  #dictionary containing all the stuff that needs to be passed every page load
 clean_data()
 c_dat['connection'] = True
 a_dat = {}#Dict containing some account data, won't be passed every page load

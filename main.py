@@ -42,12 +42,12 @@ from kivy.uix.floatlayout import FloatLayout
 #Window.clearcolor = (.8, .8, .8, 1)
 
 from kivy.core.window import Window
-Window.softinput_mode = 'pan'
+Window.softinput_mode = 'below_target'
 
 import nexusAPI as api
 import irc
 
-__version__ = "0.0.4"
+__version__ = "0.1"
 
 #Builder.load_file('C:\\Users\\ckswi\\Google Drive\\Nexus\\nexusApp\\nexus.kv') #LAPTOP
 #Builder.load_file('C:\Users\CWPC\Google Drive\Nexus\nexusApp\nexus.kv') #PC
@@ -375,7 +375,10 @@ class Holder(BoxLayout):
                 f = len(t['faction'])
                 a = len(t['ally']) + len(t['friendly'])
                 h = len(t['neutral']) + len(t['hostile']) + len(t['enemy'])
-                self.tile_contents.text = ('Factionmates: %s, friendlies: %s, precious violence recipients: %s' % (f,a,h))
+                target_text = ('Factionmates: %s, friendlies: %s, precious violence recipients: %s' % (f,a,h))
+                if self.c_dat['faction_tile']:
+                    target_text = target_text +'\nFaction Stronghold of '+self.c_dat['faction_tile']
+                self.tile_contents.text = target_text
 
                     
                     
@@ -406,9 +409,10 @@ class Holder(BoxLayout):
 
                     #Run the Inventory adapter
                     print('Working on inventory')
-                    inv_dict_adapter = inv_to_dict_adapter(self.c_dat['inv_trim'])
-                    inv_dict_adapter.bind(on_selection_change = self.set_item)
-                    self.inv_cont.adapter = inv_dict_adapter
+                    if self.c_dat['inv_trim']:
+                        inv_dict_adapter = inv_to_dict_adapter(self.c_dat['inv_trim'])
+                        inv_dict_adapter.bind(on_selection_change = self.set_item)
+                        self.inv_cont.adapter = inv_dict_adapter
 
                     
                     #restock the skills
@@ -454,8 +458,8 @@ class Holder(BoxLayout):
                     for flag_recap in self.c_dat['flag_recap']:
                         btn = FillButton(text=flag_recap[1],on_press=partial(self.flag_recap,flag_recap[0]))
                         self.action_pane.add_widget(btn)
-                    for flag_grab in self.c_dat['flag_grab']:
-                        btn = FillButton(text=flag_grab[1],on_press=partial(self.flag_grab,flag_grab[0]))
+                    if self.c_dat['flag_capture']:
+                        btn = FillButton(text='Capture Standard',on_press=self.flag_cap)
                         self.action_pane.add_widget(btn)
                         
                 else:
@@ -467,9 +471,9 @@ class Holder(BoxLayout):
                     
                 #Change the colour of tabs with interesting things in them
                 if self.c_dat['targets']['enemy'] or self.c_dat['targets']['hostile'] or self.c_dat['targets']['neutral']:
-                    self.ids.irc_tab.background_color = (1,0,0,1)
+                    self.ids.target_tab.background_color = (1,0,0,1)
                 else:
-                    self.ids.irc_tab.background_color = (1,1,1,1)
+                    self.ids.target_tab.background_color = (1,1,1,1)
                     
                     
                 
@@ -503,10 +507,10 @@ class Holder(BoxLayout):
                 self.function_pane.clear_widgets()
                 self.function_pane.cols = 2
                 self.function_pane.add_widget(Label(text='username'))
-                self.un_input = TextInput(multiline=False)
+                self.un_input = MyTextInput(multiline=False)
                 self.function_pane.add_widget(self.un_input)
                 self.function_pane.add_widget(Label(text='password'))
-                self.pw_input = TextInput(multiline=False,password=True)
+                self.pw_input = MyTextInput(multiline=False,password=True)
                 self.function_pane.add_widget(self.pw_input)
                 btn = Button(text='Login')
                 btn.bind(on_press=self.login)
@@ -536,7 +540,7 @@ class Holder(BoxLayout):
         print('trying to log in')
         print(self.un_input.text)
         self.access_api(partial(api.login,self.un_input.text,self.pw_input.text))
-        self.refresh_quick()
+        self.need_ref = True
         
         
     def connect_character(self,cID,button):
@@ -704,12 +708,13 @@ class Holder(BoxLayout):
         self.need_ref = True
     
     
-    def flag_recap(self,id):
+    def flag_recap(self,id,button):
         self.access_api(partial(api.flag_recap,id))
         self.need_ref = True
         
-    def flag_cap(self):
-        pass
+    def flag_cap(self,button):
+        api.flag_cap()
+    
     
     
     def irc_connect(self):
@@ -718,12 +723,11 @@ class Holder(BoxLayout):
         irc.initialise(self.irc_nickname,self.irc_channel)
         Clock.schedule_interval(self.irc_update_names, 20)
         Clock.schedule_interval(self.irc_update, 1)
-        #self.ids.irc_connect.clear_widgets()
-        #self.ids.irc_connect.parent.remove_widget(self.ids.irc_connect)
-        #self.ids.irc_connect.hide
+        self.irc_active = True
         
-        
-        
+    def irc_disconnect(self):
+        irc.stop_irc()
+        self.irc_active = False
         
         
     def irc_update(self,clock):
@@ -749,12 +753,18 @@ class Holder(BoxLayout):
         if name_list:
             print name_list.split(' ')
             self.ids.irc_pane_names.item_strings = name_list.split(' ')
+        if not self.irc_active:
+            return False
+        
             
     def irc_update_names(self,clock):
         try:
             irc.p.names()
         except:
             pass
+        if not self.irc_active:
+            return False
+
 
         
     def irc_say(self):
@@ -790,7 +800,8 @@ class InvListButton(ListItemButton):
     pass
 class InvListLabel(ListItemLabel):
     pass
-
+class MyTextInput(TextInput):
+    pass
     
     
 ###Build the app###

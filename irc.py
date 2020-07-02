@@ -198,7 +198,12 @@ def initialise(nick, channel):
     
 
 
-    
+def stop_irc():
+    try:
+        reactor.stop()
+    except:
+        pass
+        
 def start_irc(nick, channel):
     # initialize logging
     log.startLogging(sys.stdout)

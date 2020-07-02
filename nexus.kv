@@ -22,7 +22,7 @@
     
     #IDs for Inventory panel
     item_context:item_context
-    inv_cont:inv_cont
+    inv_cont:inv_cont 
     
     #IDs for Target panel
     target_pane:target_pane
@@ -121,7 +121,7 @@
         TabbedPanel:
             id:tabs
             tab_height:self.width/10
-            tab_width:self.width/7
+            tab_width:self.width/8
             default_tab_text: 'Func'
             pos_hint: {'center_x': .5, 'center_y': .5}
             
@@ -237,6 +237,7 @@
                                     on_press:root.door('pick')
 
                             GridLayout:
+                                size_hint_y:None
                                 id:action_pane
                                 cols: 1
                                 row_default_height: root.height/15
@@ -330,7 +331,7 @@
                             text:'Say'
                             font_size:self.height*.3
                             on_press: root.say(message_input.text)                            
-                        TextInput:
+                        MyTextInput:
                             id:message_input
                         Button:
                             size_hint_x:.15
@@ -353,12 +354,12 @@
                 text:'Func'
                 BoxLayout:
                     orientation:'vertical'
-                    Spinner:
-                        text:'Additional Functions'
-                        id:function_context
-                        values:["IRC","Safe (NA)","Locker (NA)","Pets (NA)","Crafting (NA),Log Out (NA)"]
-                        on_text:root.add_tab()
-                        size_hint_y:.2
+                    # Spinner:
+                        # text:'Additional Functions'
+                        # id:function_context
+                        # values:["IRC","Safe (NA)","Locker (NA)","Pets (NA)","Crafting (NA),Log Out (NA)"]
+                        # on_text:root.add_tab()
+                        # size_hint_y:.2
                     ScrollView
                         size: self.size
                     #Label:
@@ -387,14 +388,14 @@
                         Label:
                             text:'Nickname:'
                             size_hint_x:.8
-                        TextInput:
+                        MyTextInput:
                             id:irc_nickname_input
-                            text: 'KlapBot'
+                            text: ''
                         Label:
                             text: 'Channel:'
-                        TextInput:
+                        MyTextInput:
                             id:irc_channel_input
-                            text: '#klaptest'
+                            text: '#'
                         Button:
                             size_hint_x:.2
                             text:'Connect'
@@ -419,7 +420,7 @@
                             
                     BoxLayout:
                         size_hint_y:.15
-                        TextInput:
+                        MyTextInput:
                             id:irc_input
                             size_hint_x:.8
                         Button:
@@ -528,12 +529,18 @@
     shorten:True
     shorten_from:'right'
     valign:'middle'
+
 <InvListLabel@ListItemLabel>:
     font_size:self.height*.65
     text_size: self.size
     shorten:True
     shorten_from:'right'
     valign:'middle'
+
+<MyTextInput@TextInput>:
+    on_double_tap:self.select_all()
+    
+    
     
 <ContactItem@BoxLayout>:
     index: 0
