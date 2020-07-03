@@ -5,6 +5,7 @@
 from kivy.config import Config
 Config.set('graphics', 'width', '500')
 Config.set('graphics', 'height', '900')
+Config.set('kivy', 'log_level', 'debug')
 
 from kivy.app import App
 from kivy.lang import Builder
@@ -19,14 +20,17 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button 
 from kivy.uix.dropdown import DropDown
 from kivy.uix.textinput import TextInput
-from kivy.uix.listview import (ListView, ListItemButton, ListItemLabel,
-                               CompositeListItem)
-from kivy.adapters.dictadapter import DictAdapter
 
+
+from kivy.uix.behaviors import FocusBehavior
+from kivy.uix.recycleview.layout import LayoutSelectionBehavior
 from kivy.core.text.markup import MarkupLabel
 
-from kivy.garden.recycleview import RecycleView
-from kivy.properties import ListProperty
+from kivy.uix.recycleview import RecycleView
+from kivy.uix.recycleview.views import RecycleDataViewBehavior
+from kivy.uix.recycleboxlayout import RecycleBoxLayout
+
+from kivy.properties import ListProperty, BooleanProperty
 
 
 from kivy.clock import Clock, _default_time as time
@@ -45,12 +49,13 @@ from kivy.core.window import Window
 Window.softinput_mode = 'below_target'
 
 import nexusAPI as api
-import irc
+#import irc
 
 __version__ = "0.1"
 
 #Builder.load_file('C:\\Users\\ckswi\\Google Drive\\Nexus\\nexusApp\\nexus.kv') #LAPTOP
 #Builder.load_file('C:\Users\CWPC\Google Drive\Nexus\nexusApp\nexus.kv') #PC
+
 
 #Searches for a string in a list of lists as the first element of the sublists
 def find_in(string,lists):
@@ -77,167 +82,8 @@ def find_in_in_stupid(string,listss):
                     return list,type
                     
 
-def join_adapter_dict(dict1,dict2):
-    #should only join in the case where there are actual things to join.
-    if len(dict1)==1:
-        dict1 = {}
-    if len(dict2)==1:
-        dict2 = {}
-    sep = len(dict1)
-    for i in range(len(dict2)):
-        dict1[str(i+sep)] = dict2[str(i)]
-    return dict1
-    
-def inv_to_dict_adapter(inv):
-    inv_dict = {}
-    inv_ints = range(len(inv))
-    for i in inv_ints:
-        item = inv[i]
-        item_dict = {
-                    'text':item[0],
-                    'qty':item[2],
-                    'wgt':item[3],
-                    'id':item[4],
-                    'is_selected':False
-                    }
-        inv_dict[str(i)] = item_dict
-        
 
-    inv_ints = ["{0}".format(index) for index in range(len(inv))]
 
-    
-    inv_args_converter = lambda row_index, item: \
-        {'text': item['text'],
-         'size_hint_y': None,
-         'height': 35,
-         'cls_dicts': [{'cls': InvListButton,
-                        'kwargs': {'text': item['text'],'size_hint_x':.8}},
-                       {'cls': InvListLabel,
-                        'kwargs': {'text': item['qty'],'size_hint_x':.1}},
-                       {'cls': InvListLabel,
-                        'kwargs': {'text': item['wgt'],'size_hint_x':.1}}
-                        ]}
-                        
-    inv_dict_adapter = DictAdapter(sorted_keys=inv_ints,
-                               data=inv_dict,
-                               args_converter=inv_args_converter,
-                               selection_mode='single',
-                               propagate_selection_to_data=True,
-                               cls=CompositeListItem)
-    
-    return inv_dict_adapter
-
-def targets_to_dict_adapter(objects,target_lists):
-    targets_dict = {}
-    
-
-    head = {'text':'Objects','lvl':'','hp':'','mp':'','is_selected':False}
-    targets_dict['0'] = head
-    i=0
-    for object,value in objects.iteritems():
-        print (object,value)
-        if value:
-            i=i+1
-            print(i)
-            object_dict = {
-                            'text':object,
-                            'lvl':'',
-                            'hp':'',
-                            'mp':'',
-                            'is_selected':False
-                            }
-            targets_dict[str(i)] = object_dict
-        
-    
-    
-    for rel,target_list in target_lists.iteritems():
-        rel_dict = {}
-        head = {'text':rel,'lvl':'','hp':'','mp':'','is_selected':False}
-        rel_dict['0'] = head
-        for i in range(len(target_list)):
-            target = target_list[i]
-            target_dict = {
-                        'text':target[0],
-                        'lvl':target[2],
-                        'hp':target[3],
-                        'mp':target[4],
-                        'is_selected':False
-                        }
-            rel_dict[str(i+1)] = target_dict
-        if not targets_dict:
-            targets_dict = rel_dict
-            
-        else:
-            targets_dict = join_adapter_dict(targets_dict,rel_dict)
-
-    
-    target_ints = ["{0}".format(index) for index in range(len(targets_dict))]
-    
-
-    
-    target_args_converter = lambda row_index, target: \
-        {'text': target['text'],
-         'size_hint_y': None,
-         'height': 35,
-         'cls_dicts': [{'cls': InvListButton,
-                        'kwargs': {'text': target['text'],'size_hint_x':.7}},
-                       {'cls': InvListLabel,
-                        'kwargs': {'text': target['lvl'],'size_hint_x':.1}},
-                       {'cls': InvListLabel,
-                        'kwargs': {'text': target['hp'],'color':(1,0,0,1),'size_hint_x':.1}},
-                       {'cls': InvListLabel,
-                        'kwargs': {'text': target['mp'],'color':(.4,.5,.95,1),'size_hint_x':.1}}
-                        ]}
-                        
-    target_dict_adapter = DictAdapter(sorted_keys=target_ints,
-                               data=targets_dict,
-                               args_converter=target_args_converter,
-                               selection_mode='single',
-                               propagate_selection_to_data=True,
-                               cls=CompositeListItem)
-
-    return target_dict_adapter
-
-def abilities_to_dict_adapter(ability_lists):
-    ability_dict = {}
-
-    for type,ability_list in ability_lists.iteritems():
-        type_dict = {}
-        head = {'text':type,'lvl':'','hp':'','mp':'','is_selected':False}
-        type_dict['0'] = head
-        for i in range(len(ability_list)):
-            ability = ability_list[i]
-            ability['is_selected'] = False
-            type_dict[str(i+1)] = ability
-            
-        if not ability_dict:
-            ability_dict = type_dict
-        else:
-            ability_dict = join_adapter_dict(ability_dict,type_dict)
-
-    
-    ability_ints = ["{0}".format(index) for index in range(len(ability_dict))]
-    
-
-    
-    ability_args_converter = lambda row_index, ability: \
-        {'text': ability['text'],
-         'size_hint_y': None,
-         'height': 45,
-         'cls_dicts': [{'cls': InvListButton,
-                        'kwargs': {'text': ability['text'],'size_hint_x':.85}},
-                       {'cls': InvListLabel,
-                        'kwargs': {'text': ability['mp'],'color':(.4,.5,.95,1),'size_hint_x':.15}}
-                        ]}
-                        
-    ability_dict_adapter = DictAdapter(sorted_keys=ability_ints,
-                               data=ability_dict,
-                               args_converter=ability_args_converter,
-                               selection_mode='single',
-                               propagate_selection_to_data=True,
-                               cls=CompositeListItem)
-
-    return ability_dict_adapter
 
 
 
@@ -271,7 +117,7 @@ class Holder(BoxLayout):
     default_action_pane= ObjectProperty(None)
     
     #IDs for skill page
-    ability_pane = ObjectProperty(None)
+    ability_cont = ObjectProperty(None)
     
     #IDs for Map panel
     map_pane = ObjectProperty(None)
@@ -312,7 +158,8 @@ class Holder(BoxLayout):
                 btn.bind(on_press=partial(self.door,'alternate'))
 
         #Do an initial page load
-        self.access_api(api.ref_force)
+        self.c_dat = api.ref_force()
+        self.access_api(api.page_load)
         self.need_ref = True
         
         #Set the GUI to update from the data every .1 seconds
@@ -367,28 +214,31 @@ class Holder(BoxLayout):
                 if self.c_dat['error']:
                     self.log.text = self.c_dat['error']
                 else:
-                    self.log.text = self.c_dat['log'].split('- ')[1]
+                    self.log.text = self.c_dat['log'][0].split('- ')[1]
                 self.status.text = self.c_dat['status']
                 
                 #Print some basic tile contents on the map page
                 t = self.c_dat['targets']
-                f = len(t['faction'])
-                a = len(t['ally']) + len(t['friendly'])
-                h = len(t['neutral']) + len(t['hostile']) + len(t['enemy'])
+                f = 1#len(t['faction'])
+                a = 1#len(t['ally']) + len(t['friendly'])
+                h = 1#len(t['neutral']) + len(t['hostile']) + len(t['enemy'])
                 target_text = ('Factionmates: %s, friendlies: %s, precious violence recipients: %s' % (f,a,h))
                 if self.c_dat['faction_tile']:
                     target_text = target_text +'\nFaction Stronghold of '+self.c_dat['faction_tile']
                 self.tile_contents.text = target_text
 
                     
-                    
+                
                 print('working on map') 
                 #Fill the map data
                 for c in self.map_pane.children:
+                    if len(self.c_dat['map']) == 0:
+                        print('skipping map')
+                        continue
                     i = c.id
                     tile_data = self.c_dat['map'][int(i)]
                     tiletext = [tile_data['type']]
-                    for key,value in tile_data.iteritems():
+                    for key,value in tile_data.items():
                         if value == True:
                             tiletext.append(key)
                     tiletext = '\n'.join(tiletext)
@@ -398,7 +248,7 @@ class Holder(BoxLayout):
                 
                 print('working on messages')
                 #Populate the message panel
-                self.message_pane.text = self.c_dat['log']
+                self.message_pane.text = self.c_dat['log'][0]
                 
                 
                 
@@ -410,23 +260,17 @@ class Holder(BoxLayout):
                     #Run the Inventory adapter
                     print('Working on inventory')
                     if self.c_dat['inv_trim']:
-                        inv_dict_adapter = inv_to_dict_adapter(self.c_dat['inv_trim'])
-                        inv_dict_adapter.bind(on_selection_change = self.set_item)
-                        self.inv_cont.adapter = inv_dict_adapter
+                        self.inv_cont.set_data([{'label':i[0], 'quantity':i[2], 'weight':i[3], 'item_id':i[4]} for i in self.c_dat['inv_trim']])
 
                     
                     #restock the skills
                     print('working on skills')
-                    abilities_adapter = abilities_to_dict_adapter(self.c_dat['abilities'])
-                    abilities_adapter.bind(on_selection_change = self.use_ability)
-                    self.ability_pane.adapter = abilities_adapter
+                    self.ability_cont.set_data(self.c_dat['abilities'])
+
                     
                     print('working on targets')
                     #Stock the target list
-                    targets_adapter = targets_to_dict_adapter(self.c_dat['objects'],self.c_dat['targets'])
-                    targets_adapter.bind(on_selection_change = self.set_target)
-                    self.target_pane.adapter = targets_adapter
-                                
+                    self.target_pane.set_data(self.c_dat['targets']+self.c_dat['pets'])
 
                     #Add the current location
                     self.current_location.text = self.c_dat['location']
@@ -470,10 +314,10 @@ class Holder(BoxLayout):
                     
                     
                 #Change the colour of tabs with interesting things in them
-                if self.c_dat['targets']['enemy'] or self.c_dat['targets']['hostile'] or self.c_dat['targets']['neutral']:
-                    self.ids.target_tab.background_color = (1,0,0,1)
-                else:
-                    self.ids.target_tab.background_color = (1,1,1,1)
+                #if self.c_dat['targets']['enemy'] or self.c_dat['targets']['hostile'] or self.c_dat['targets']['neutral']:
+                #    self.ids.target_tab.background_color = (1,0,0,1)
+                #else:
+                #    self.ids.target_tab.background_color = (1,1,1,1)
                     
                     
                 
@@ -491,8 +335,8 @@ class Holder(BoxLayout):
                     btn = ClipButton(text = c[0])
                     btn.bind(on_press=partial(self.connect_character,c[9]))
                     box = BoxLayout()
-                    dict = {1:(1,1,1,1),2:(0,1,0,1),3:(1,0,0,1),4:(.4,.5,.95,1)}
-                    for key, val in dict.iteritems():
+                    d_vals = {1:(1,1,1,1),2:(0,1,0,1),3:(1,0,0,1),4:(.4,.5,.95,1)}
+                    for key, val in d_vals.items():
                         label = ClipLabel(text=c[key],color=val)
                         if key ==1:
                             label.size_hint_x = .5
@@ -529,7 +373,7 @@ class Holder(BoxLayout):
                 self.t = threading.Thread(target= function)
                 self.t.start()
             else:
-                Clock.schedule_once(access_api(function),.1) #This queues up to one action. Not ideal.
+                Clock.schedule_once(self.access_api(function),.1) #This queues up to one action. Not ideal.
         except:
             self.t = threading.Thread(target= function)
             self.t.start()
@@ -570,19 +414,9 @@ class Holder(BoxLayout):
         self.need_ref = True
     
     ###Combat stuff###
-    def set_target(self,adapter):
-        if adapter.selection:
-        
-            if adapter.selection[0].text in ['ward','fort','door']:
-                self.target = adapter.selection[0].text
-                print "attacking " + adapter.selection[0].text
-                self.target_label.text = 't:'+adapter.selection[0].text
-            elif adapter.selection[0].text not in self.c_dat['targets'].keys():
-                target_data,rel = find_in_in(adapter.selection[0].text, self.c_dat['targets'])
-                if target_data:
-                    self.target = target_data[1]
-                    self.target_label.text = 't:'+target_data[0]
-    
+    def set_target(self,target_id, target_name):
+        self.target = target_id
+        self.target_label.text = 't:'+target_name 
 
         
     def set_charge(self,c):
@@ -620,7 +454,7 @@ class Holder(BoxLayout):
         if reload_context == "Weapon":
             iID = self.weapon
             self.access_api(partial(api.pickup,iID))
-        if reload_context == "All":    
+        if reload_context == "All":
             iID = 'all'
             self.access_api(partial(api.pickup,iID))
         #Other contextually useful buttons?
@@ -632,12 +466,9 @@ class Holder(BoxLayout):
         self.need_ref = True
     
     #Item stuff
-    def set_item(self,adapter):
-        if adapter.selection:
-            item_data = find_in(adapter.selection[0].text, self.c_dat['inv_trim'])
-            self.item = item_data[4]
-            self.item_label.text = 'i:'+item_data[0]
-
+    def set_item(self, item_id, label):
+        self.item = item_id
+        self.item_label.text = 'i:' + label
 
         
     
@@ -671,21 +502,16 @@ class Holder(BoxLayout):
        
         
     #Skills stuff
-    def use_ability(self,adapter):
-        if adapter.selection:
-            if adapter.selection[0].text not in self.c_dat['abilities'].keys():
-                ability_data,type = find_in_in_stupid(adapter.selection[0].text, self.c_dat['abilities'])
-                if ability_data:
-                    print(type)
-                    if type == 'skills':
-                        self.access_api(partial(api.useSkill,ability_data['id']))
-                    elif type in ['cast','trigger']:
-                        self.access_api(partial(api.castSpell,ability_data['id']))
-        self.need_ref = True
+    def use_ability(self, ability_id, ability_type):
+        if ability_type == 'skill':
+            self.access_api(partial(api.useSkill, ability_id))
+        if ability_type in ['cast', 'trigger']:
+            self.access_api(partial(api.castSpell, ability_id))
+    
     
     #ACTIONS stuff
     def door(self,action,button = 0):
-        print action
+        print(action)
         self.access_api(partial(api.door,action))
         self.need_ref = True
         
@@ -715,65 +541,136 @@ class Holder(BoxLayout):
     def flag_cap(self,button):
         api.flag_cap()
     
-    
-    
-    def irc_connect(self):
-        self.irc_nickname = self.ids.irc_nickname_input.text.encode('utf-8')
-        self.irc_channel = self.ids.irc_channel_input.text.encode('utf-8')
-        irc.initialise(self.irc_nickname,self.irc_channel)
-        Clock.schedule_interval(self.irc_update_names, 20)
-        Clock.schedule_interval(self.irc_update, 1)
-        self.irc_active = True
-        
-    def irc_disconnect(self):
-        irc.stop_irc()
-        self.irc_active = False
-        
-        
-    def irc_update(self,clock):
-        try:
-            new_messages = irc.p.get_message_log()
-            name_list = irc.p.get_names()
-        except:
-            new_messages = []
-            name_list = []
-        if new_messages:
-            for m in new_messages:
-                print(m)
-                message_dict = {'viewclass':'ContactItem'}
-                message_dict['message_time'] = m[0][1:-1]
-                message_dict['message_text'] = m[1]
-                message_dict['index'] = self.irc_log[-1]['index']+1
-                self.irc_log.append(message_dict)
-            self.ids.irc_pane_messages.data  = self.irc_log
-            if not self.ids.tabs.current_tab.text == 'IRC':
-                self.ids.irc_tab.background_color = (1,0,0,1)
-        self.ids.irc_pane_messages.scroll_y = 0
-        
-        if name_list:
-            print name_list.split(' ')
-            self.ids.irc_pane_names.item_strings = name_list.split(' ')
-        if not self.irc_active:
-            return False
-        
-            
-    def irc_update_names(self,clock):
-        try:
-            irc.p.names()
-        except:
-            pass
-        if not self.irc_active:
-            return False
+
+#%% Inventory business
+
+class SelectableRecycleBoxLayout(FocusBehavior, LayoutSelectionBehavior,
+                                 RecycleBoxLayout):
+    ''' Adds selection and focus behaviour to the view. '''
 
 
-        
-    def irc_say(self):
+class InvLabel(RecycleDataViewBehavior, GridLayout):
+    ''' Add selection support to the Label '''
+    index = None
+    selected = BooleanProperty(False)
+    selectable = BooleanProperty(True)
+    cols = 3
 
-        msg = self.ids.irc_input.text.encode('utf-8')
-        irc.p.send_message(msg)
-        self.ids.irc_input.text = ''
+    def refresh_view_attrs(self, rv, index, data):
+        ''' Catch and handle the view changes '''
+        self.index = index
+        self.label_text = data['label']
+        self.quantity_text = data['quantity']
+        self.weight_text = data['weight']
+        self.item_id = data['item_id']
+        return super(InvLabel, self).refresh_view_attrs(
+            rv, index, data)
+
+    def on_touch_up(self, touch):
+        ''' Add selection on touch down '''
+        if super(InvLabel, self).on_touch_down(touch):
+            return True
+        if self.collide_point(*touch.pos) and self.selectable:
+            return self.parent.select_with_touch(self.index, touch)
+
+    def apply_selection(self, rv, index, is_selected):
+        ''' Respond to the selection of items in the view. '''
+        self.selected = is_selected
+        if is_selected:
+            App.get_running_app().root.set_item(self.item_id, self.label_text)
+        
+
+class TargetLabel(RecycleDataViewBehavior, GridLayout):
+    ''' Add selection support to the Label '''
+    index = None
+    selected = BooleanProperty(False)
+    selectable = BooleanProperty(True)
+    relationship_color_map = {'faction':(0,0,0,1),
+                              'ally': (),
+                              'neutral': (),
+                              'hostile': (),
+                              'enemy':()}
+    bcolor = ListProperty([0,0,0,1])
+    cols = 4
+
+    def refresh_view_attrs(self, rv, index, data):
+        ''' Catch and handle the view changes '''
+        self.index = index
+        self.name_text = data['name']
+        self.level_text = data['level']
+        self.hp_text = data['hp']
+        self.mp_text = data['mp']
+        self.character_id = data['char_id']
+        self.relationship = data['relationship']
+        
+        return super(TargetLabel, self).refresh_view_attrs(
+            rv, index, data)
+
+    def on_touch_up(self, touch):
+        ''' Add selection on touch down '''
+        if super(TargetLabel, self).on_touch_down(touch):
+            return True
+        if self.collide_point(*touch.pos) and self.selectable:
+            return self.parent.select_with_touch(self.index, touch)
+
+    def apply_selection(self, rv, index, is_selected):
+        ''' Respond to the selection of items in the view. '''
+        self.selected = is_selected
+        if is_selected:
+            App.get_running_app().root.set_target(self.character_id, self.name_text)
+
+class AbilityLabel(RecycleDataViewBehavior, GridLayout):
+    ''' Add selection support to the Label '''
+    index = None
+    selected = BooleanProperty(False)
+    selectable = BooleanProperty(False)
+    bcolor = ListProperty([0,0,0,1])
+    cols = 2
+
+    def refresh_view_attrs(self, rv, index, data):
+        ''' Catch and handle the view changes '''
+        self.index = index
+        self.name_text = data['text']
+        self.type_text = data['ability_type'].title()
+        self.ability_id = data['id']
+        
+        return super(AbilityLabel, self).refresh_view_attrs(
+            rv, index, data)
     
-    
+    def on_touch_up(self, touch):
+        ''' Add selection on touch down '''
+        if super(AbilityLabel, self).on_touch_down(touch):
+            return True
+        if self.collide_point(*touch.pos):
+            App.get_running_app().root.use_ability(self.ability_id, self.ability_type)
+            return self.parent.select_with_touch(self.index, touch)
+
+
+class InvRV(RecycleView):
+    def __init__(self, **kwargs):
+        super(InvRV, self).__init__(**kwargs)
+        self.data = []
+
+    def set_data(self, data):
+        self.data = self.data = data 
+
+
+class TargetRV(RecycleView):
+    def __init__(self, **kwargs):
+        super(TargetRV, self).__init__(**kwargs)
+        self.data = []
+
+    def set_data(self, data):
+        self.data = self.data = data 
+
+
+class AbilityRV(RecycleView):
+    def __init__(self, **kwargs):
+        super(AbilityRV, self).__init__(**kwargs)
+        self.data = []
+
+    def set_data(self, data):
+        self.data = self.data = data 
     
 #These are custom kivy classes    
 class Tabbable(TabbedPanel):
@@ -794,12 +691,6 @@ class LoginGridLayout(GridLayout):
     pass
 class SpinnerOption(Button):
     pass
-class InvGridLayout(GridLayout):
-    pass
-class InvListButton(ListItemButton):
-    pass
-class InvListLabel(ListItemLabel):
-    pass
 class MyTextInput(TextInput):
     pass
     
@@ -816,7 +707,9 @@ class NexusApp(App):
         pass
       
     def build(self):
-        return Holder()
+        global holder
+        holder = Holder()
+        return holder
     
 ###Run The application###
 if __name__ == '__main__':

@@ -8,7 +8,11 @@ def page_load(postData={}, quick = False):
     print('page loading')
     if postData:
         try:
-            p = s.post(url,data=postData)
+            if 'op' in postData.keys():
+                u = url+'&op='+postData['op']
+            else:
+                u = url
+            p = s.post(u,data=postData)
             c_dat['connection'] = True
         except requests.ConnectionError as e:
             c_dat['connection'] = False
@@ -42,7 +46,7 @@ def login(un,pw):
     postdat = {'username':un,'user_password':pw,'op':'login'}
     
     #Send login request
-    l = s.post("http://www.nexusclash.com/modules.php?name=Your_Account", data=postdat)
+    l = s.post("https://www.nexusclash.com/modules.php?name=Your_Account&op=login", data=postdat)
     print('attempted to log in')
     ses_save(s)
     page_load()
@@ -86,7 +90,7 @@ def char_dis():
 ###Scraping the character page###
 def char_ref(div):
     char_list = []
-    for c in div[3][0]:
+    for c in div[1][0]:
         if len(c) != 10: #Break if the number of html children isn't 10. Fixes released characters.
             print('breaking')
             break
@@ -106,15 +110,15 @@ def stat_ref(div):
     stats = div[0][0][0]
     c_dat['name'] = stats[0].text_content()
     c_dat['cID'] = stats[0][0][0].attrib['href'].split('=')[-1]
-    c_dat['ap'] = stats[2].text_content()
-    c_dat['hp'] = stats[3].text_content()
-    c_dat['mp'] = stats[4].text_content()
+    c_dat['ap'] = stats[2].text_content().strip().split(' ')[0]
+    c_dat['hp'] = stats[3].text_content().strip().split(' ')[0]
+    c_dat['mp'] = stats[4].text_content().strip().split(' ')[0]
     c_dat['mo'] = stats[5].text_content().split('.')[0]
-    c_dat['level'] = stats[1].text_content()[6:7]
+    c_dat['level'] = stats[1].text_content()[6:8]
     c_dat['status'] = div[0][0][2].text_content()
  
 def message_ref(div):
-    c_dat['log'] = div.text_content()
+    c_dat['log'] = div.text_content().split(' \r\n')[1:-1]
     #c_dat['log'] = div.text_content().split(' \r\n')[1:-1]
     
     
@@ -126,26 +130,24 @@ def error_ref(div):
 def spell_ref(f):
 
     if f.attrib['name'] == 'spellother': #Castable spells from memory
-        c_dat['abilities']['cast'] = []
         for s in f[1]:
             value = s.attrib['value']
             text = s.text
             mp = ''
-            c_dat['abilities']['cast'].append({'text':text,'id':value,'mp':mp})
+            c_dat['abilities'].append({'text':text,'id':value,'mp':mp, 'ability_type':'trigger'})
 
     if f.attrib['name'] == 'spellattack': #Castable spells from gems
-        c_dat['abilities']['trigger'] = []
         for s in f[1]:
             iID = s.attrib['value']
             text = s.text
             mp = ''
-            c_dat['abilities']['trigger'].append({'text':text,'id':iID,'mp':mp})
+            c_dat['abilities'].append({'text':text,'id':iID,'mp':mp, 'ability_type':'trigger'})
        
 def skill_ref(f):
 	#This could really have mp and ap info separated
     skill_text = f[0].attrib['value']
     skill_mp = ''
-    c_dat['abilities']['skills'].append({'text':skill_text,'id':skill_text,'mp':skill_mp})
+    c_dat['abilities'].append({'text':skill_text,'id':skill_text,'mp':skill_mp,'ability_type':'skill'})
 
     
 def portal_ref(f):
@@ -187,9 +189,6 @@ def combat_ref(f):
     return
     
 def flag_ref(f):
-    global test
-    test = f
-    print('test')
     flag_recap = []
     if f.attrib['name'] == 'flag_retrieval':
         flags_raw = f[2]
@@ -215,55 +214,76 @@ def loc_ref(tag):
     c_dat['location'] = tag.text_content()
 
 #Target ref should probably scrape current hp. Stretch goal.
-def target_ref(characters, levels, stats):
-    # Remove faction link if we are on a SH tile:
-    if characters:    
-        if characters[0].attrib['href'][:32] == 'modules.php?name=Game&op=faction':
-            c_dat['faction_tile'] = characters[0].text_content()
-            characters = characters[1:]
-        
-
-        #Go through all the characters. Currently completely ignores pets, despite them being passed in the characters variable.
-        for i in range(len(levels)):
-            name = characters[i].text
-            relationship = characters[i].attrib['class']
-            cID = characters[i].attrib['href'].split("'")[-2]
-            level = levels[i].text_content()
-            
-            hp_test = stats[2*i].attrib['src'][-5]
-            if hp_test == '1':
-                hp = 'Max'
-            elif hp_test == '2':
-                hp = 'High'
-            elif hp_test == '3':
-                hp = 'Low'
-            elif hp_test == '4':
-                hp = 'Dire'
-            mp_test = stats[2*i+1].attrib['src'][-5]
-            if mp_test == '1':
-                mp = 'Max'
-            elif mp_test == '2':
-                mp = 'High'
-            elif mp_test == '3':
-                mp = 'Low'
-            elif mp_test == '4':
-                mp = 'Out'
-            c_dat['targets'][relationship].append([name,cID,level,hp,mp])
-            
-        
+def target_ref(name, level, hp_im, mp_im):
+    relationship = name.attrib['class']
+    cID = name.attrib['href'].split("'")[-2]
     
-    #Check if it's a pet or a person.
-    #Person case:
-    # if not 'title' in a.attrib:
-        # name = a.text
-        # cID = a.attrib['href'].split("'")[-2]
-        
-    #Pet case:
-    # else:
-        # name = a.text
-        # pID = a.attrib['href'].split('=')[-1]
-        # c_dat['pets'][relationship].append([name,pID])
-    return
+    if 'title' in hp_im.attrib:
+        hp = hp_im.attrib['title'].split('/')[0]
+    else:
+        hp_test = hp_im.attrib['src'][-5]
+        if hp_test == '1':
+            hp = 'Max'
+        elif hp_test == '2':
+            hp = 'High'
+        elif hp_test == '3':
+            hp = 'Low'
+        elif hp_test == '4':
+            hp = 'Dire'
+    if 'title' in mp_im.attrib:
+        mp = mp_im.attrib['title'].split('/')[0]
+    else:
+        mp_test = mp_im.attrib['src'][-5]
+        if mp_test == '1':
+            mp = 'Max'
+        elif mp_test == '2':
+            mp = 'High'
+        elif mp_test == '3':
+            mp = 'Low'
+        elif mp_test == '4':
+            mp = 'Out'
+    
+    if level == 'pet':
+        group='pets'
+    else:
+        group = 'targets'
+        level = level.text_content()
+    c_dat[group].append({'name':name.text_content(),
+                          'char_id':cID,
+                          'level':level,
+                          'hp':hp,
+                          'mp':mp,
+                          'relationship':relationship})
+
+    
+def targets_ref(description_tile):
+    c_dat['targets'] = []
+    c_dat['pets'] = []
+    target_elems = description_tile.getchildren()
+    target_tags = [e.tag for e in target_elems]
+    
+    characters = []
+    pets = []
+    i = 0
+    while i < len(target_tags):
+        i = i
+        if target_tags[i] == 'a':
+            if (target_tags[i+1] == 'a') & (target_tags[i+2] == 'img'):
+                characters.append(target_elems[i:i+4])
+                i=i+3
+        if target_tags[i] == 'a':
+            if (target_tags[i+1] == 'img') & (target_tags[i+2] == 'img'):
+                pets.append(target_elems[i:i+3])
+                i=i+2
+        i = i+1
+    # for i in character_levels:
+        # print(i.text_content())
+    for t in characters:
+        target_ref(*t)
+    for p in pets:
+        target_ref(p[0], 'pet', p[1], p[2])
+    
+
 ###Refs from the side bar###
 def inv_ref(sidebar):
     inv_content = []
@@ -278,7 +298,8 @@ def inv_ref(sidebar):
             else:
                 iID = item_field[0].attrib['href'].split('=')[-1]
                 inv_item.append(iID)
-
+        if len(inv_item)!=5:
+            continue
         inv_content.append(inv_item)
         
     #Now trim the inventory.
@@ -344,9 +365,9 @@ def clean_data():
     for key in ['portals','pickup','weapons','charges','error','flag_recap','flag_capture','faction_tile']:
         c_dat[key] = []
 
-    c_dat['abilities'] = {'cast':[],'trigger':[],'skills':[]}
-    c_dat['targets'] = {'faction':[],'ally':[],'friendly':[],'neutral':[],'hostile':[],'enemy':[],'objects':[]}
-    c_dat['pets'] = {'faction':[],'ally':[],'friendly':[],'neutral':[],'hostile':[],'enemy':[]}
+    c_dat['abilities'] = []
+    c_dat['targets'] = []
+    c_dat['pets'] = []
     c_dat['objects'] = {'ward':False,'door':False,'fort':False}
     
 def ref_force():
@@ -372,23 +393,23 @@ def ref_all(tree):
 
     elems = tree.xpath('.//td[@valign="top"]') #Retrieves all the tds with valign top
     #this allows the screen to be checked
-    if len(elems) == 3: #3 elems found means it's the login scree
+    if len(elems) == 1: #1 elems found means it's the login scree
         c_dat['screen'] = 'login'
         c_dat['connected'] = False
         print('login page')
     
-    if len(elems) == 5: #5 elems found means it's the character select screen
+    if len(elems) == 3: #3 elems found means it's the character select screen
         c_dat['screen'] = 'char_page'
         c_dat['connected'] = False
         char_ref(elems)
         
-    #If there are 6 tds, it is the game screen
-    if len(elems)==6:
+    #If there are 4 tds, it is the game screen
+    if len(elems)==4:
         c_dat['connected'] = True
         clean_data()
         
         #Scrape info from the main panel
-        main_panel = elems[3]
+        main_panel = elems[1]
         #Get info from the top parts of the main panel. This stuff should always be avaialable
         id_divs = main_panel.xpath('div[@id]')
         for i in id_divs:
@@ -429,27 +450,25 @@ def ref_all(tree):
                     c_dat['objects']['fort']= True      
                     combat_ref(f)
 
-            loc_ref(main_panel.xpath('b')[0])
+            loc_ref(main_panel.xpath('//b')[0])
                     
             #Parse the characters and pets, which are 'a' elements
-            character_names = main_panel.xpath('a[@class]')
-            character_levels = main_panel.xpath("*[contains(@href,'modules.php?name=Game&op=character&id')]")
-            # for i in character_levels:
-                # print(i.text_content())
-            character_stats = main_panel.xpath("img[@height='12']")
-            target_ref(character_names,character_levels,character_stats)
-            
+            tile = main_panel.xpath('//div[@class="tile_description"]')[0]
+            targets_ref(tile)
       
             
        #Scrape info from the sidebar
-        sidebar = elems[4]
+        sidebar = elems[2]
         #If the inventory sidebar is open
         if len(sidebar[0]) == 3 and sidebar[0][-1].text_content()[:5] =='\r\nINV':
             print('inventory')
             c_dat['screen'] = 'inventory'
             inv_ref(sidebar[0][2][0][0])
         #If the map sidebar is open
-        elif len(sidebar[0]) == 5:
+        elif 'Recipe Tracker' in sidebar.text_content():
+            c_dat['screen'] = 'alchemy'
+        
+        elif 'MAP' in sidebar.text_content():
             map_ref(sidebar)
             c_dat['screen'] = 'map'
         #If another sidebar is open
@@ -471,7 +490,7 @@ def respawn():
 #Map interactions
 def move(direction, leap = 0):
     postData={'op':'move','direction':direction,'sidebar':'Map'}
-    for s in c_dat['abilities']['skills']:
+    for s in c_dat['abilities']:
         if s['text'] == "Deactivate Cloak of Air":
             postData['Gust'] = 'Gust'
         print('gusting?')
@@ -486,7 +505,7 @@ def move(direction, leap = 0):
 #Door interactions
 def door(action):
     postData={'op':'door','sidebar':'Map'}
-    canseep = any(l=='Deactivate Cloak of Air' for l in c_dat['abilities']['skills'])
+    canseep = any(l['id']=='Deactivate Cloak of Air' for l in c_dat['abilities'])
     print('called door')
     print(action)
     print(c_dat['inside'])
@@ -657,7 +676,7 @@ def flag_cap():
 ####On start
             
 ###Session Setup###
-url='http://www.nexusclash.com/modules.php?name=Game'
+url='https://www.nexusclash.com/modules.php?name=Game'
 my_referer=url
 
 #Session Initialise

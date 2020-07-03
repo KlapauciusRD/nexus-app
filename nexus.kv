@@ -1,6 +1,3 @@
-#:import LinearRecycleLayoutManager kivy.garden.recycleview.LinearRecycleLayoutManager
-#:import RecycleView kivy.garden.recycleview.RecycleView
-
 
 <Holder>:
 
@@ -35,7 +32,7 @@
     default_action_pane:default_action_pane
     
     #IDs for skill page
-    ability_pane:ability_pane
+    ability_cont:ability_cont
     
     #IDs for Map panel
     map_pane:map_pane
@@ -155,7 +152,7 @@
                         Label:
                             text:'wgt'
                             size_hint_x:.1
-                    ListView
+                    InvRV
                         size: self.size
                         id: inv_cont
                         
@@ -304,7 +301,7 @@
                         Label:
                             text:'mp'
                             size_hint_x:.1
-                    ListView
+                    TargetRV:
                         size: self.size
                         id: target_pane
                         
@@ -315,9 +312,9 @@
                 BoxLayout:
                     orientation:'vertical'                
 
-                    ListView
+                    AbilityRV
                         size: self.size
-                        id: ability_pane
+                        id: ability_cont
             
             ########Messages tab########
             TabbedPanelItem:
@@ -372,61 +369,6 @@
                             row_default_height: root.height/13
                       
 
-
-
-            ###IRC TAB###
-            TabbedPanelItem:
-                text:'IRC'
-                id:irc_tab
-                on_press:self.background_color = (1,1,1,1)
-                BoxLayout:
-                    orientation:'vertical'
-                    GridLayout:
-                        cols:2
-                        id: irc_connect
-                        size_hint_y:.2
-                        Label:
-                            text:'Nickname:'
-                            size_hint_x:.8
-                        MyTextInput:
-                            id:irc_nickname_input
-                            text: ''
-                        Label:
-                            text: 'Channel:'
-                        MyTextInput:
-                            id:irc_channel_input
-                            text: '#'
-                        Button:
-                            size_hint_x:.2
-                            text:'Connect'
-                            on_press:root.irc_connect()
-                        Button:
-                            size_hint_x:.2
-                            text:'Disconnect'
-                            on_press:root.irc_disconnect()
-                    BoxLayout:
-                        RecycleView:
-                            size_hint_x:.8
-                            size:self.size
-                            id:irc_pane_messages
-                            key_viewclass: 'viewclass'
-                            key_size: 'height'
-                            #layout_manager: LinearRecycleLayoutManager(orientation="vertical", default_size=self.height)
-
-                        ListView:
-                            size_hint_x:.2
-                            id:irc_pane_names
-                            size:self.size
-                            
-                    BoxLayout:
-                        size_hint_y:.15
-                        MyTextInput:
-                            id:irc_input
-                            size_hint_x:.8
-                        Button:
-                            size_hint_x:.2
-                            text:'Say'
-                            on_press:root.irc_say()
             
     ########BottomBar section########
     BoxLayout:
@@ -516,31 +458,6 @@
     shorten_from:'right'
     max_lines:2    
     
-<InvGridLayout@GridLayout>:
-    size_hint_y: None
-    height: self.minimum_height
-    cols: 3
-    row_default_height: '20dp'
-    row_force_default: True
-    
-<InvListButton@ListItemButton>:
-    font_size:self.height*.65
-    text_size: self.size
-    shorten:True
-    shorten_from:'right'
-    valign:'middle'
-
-<InvListLabel@ListItemLabel>:
-    font_size:self.height*.65
-    text_size: self.size
-    shorten:True
-    shorten_from:'right'
-    valign:'middle'
-
-<MyTextInput@TextInput>:
-    on_double_tap:self.select_all()
-    
-    
     
 <ContactItem@BoxLayout>:
     index: 0
@@ -569,3 +486,124 @@
         shorten:True
         shorten_from:'right'
     
+    
+<InvLabel>:
+    # Draw a background to indicate selection
+    canvas.before:
+        Color:
+            rgba: (.0, 0.9, .1, .3) if self.selected else (0, 0, 0, 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    label_text: 'name text'
+    weight_text: 'weight text'
+    quantity_text: 'quantity text'
+    pos: self.pos
+    size: self.size
+    Label:
+        size_hint_x: 0.8
+        id: id_label
+        text: root.label_text
+    Label:
+        size_hint_x: 0.1
+        id: id_weight
+        text: root.weight_text
+    Label:
+        size_hint_x: 0.1
+        id: id_quantity
+        text: root.quantity_text
+
+
+<InvRV>:
+    id: inv_cont
+    viewclass: 'InvLabel'
+    SelectableRecycleBoxLayout:
+        default_size: None, dp(56)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        orientation: 'vertical'
+        multiselect: False
+        touch_multiselect: False
+        
+        
+<TargetLabel>:
+    # Draw a background to indicate selection
+    canvas.before:
+        Color:
+            rgba: (.0, 0.9, .1, .3) if self.selected else (0, 0, 0, 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    name_text: 'name text'
+    level_text: 'level text'
+    hp_text: 'hp text'
+    mp_text: 'mp text'
+    pos: self.pos
+    size: self.size
+
+    Label:
+        size_hint_x: 0.7
+        id: id_name
+        text: root.name_text
+    Label:
+        size_hint_x: 0.1
+        id: id_level
+        text: root.level_text
+    Label:
+        size_hint_x: 0.1
+        id: id_hp
+        text: root.hp_text
+    Label:
+        size_hint_x: 0.1
+        id: id_mp
+        text: root.mp_text
+
+        
+<TargetRV>:
+    id: target_cont
+    viewclass: 'TargetLabel'
+    SelectableRecycleBoxLayout:
+        default_size: None, dp(56)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        orientation: 'vertical'
+        multiselect: False
+        touch_multiselect: False
+
+
+<AbilityLabel>:
+    # Draw a background to indicate selection
+    canvas.before:
+        Color:
+            rgba: (.0, 0.9, .1, .3) if self.selected else (0, 0, 0, 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    name_text: 'name text'
+    type_text: 'type text'
+    pos: self.pos
+    size: self.size
+
+    Label:
+        size_hint_x: 0.3
+        id: id_type
+        text: root.type_text
+    Label:
+        size_hint_x: 0.7
+        id: id_name
+        text: root.name_text
+
+
+<AbilityRV>:
+    id: ability_cont
+    viewclass: 'AbilityLabel'
+    SelectableRecycleBoxLayout:
+        default_size: None, dp(56)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        orientation: 'vertical'
+        multiselect: False
+        touch_multiselect: False
